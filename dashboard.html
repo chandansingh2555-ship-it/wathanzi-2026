@@ -7,14 +7,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"/>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, get, remove, update, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, get, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
     const app=initializeApp({apiKey:"AIzaSyCiIpEt33eBLmna3YdXEbXZ4wLP5CLD20w",authDomain:"wathanzi.firebaseapp.com",databaseURL:"https://wathanzi-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"wathanzi",storageBucket:"wathanzi.firebasestorage.app",messagingSenderId:"456356745959",appId:"1:456356745959:web:aeb1adaeba3cc73cbdc842"});
     const db=getDatabase(app);
-
-    window._fbGet=async(path)=>{
-      const snap=await get(ref(db,path));
-      return snap.exists()?snap.val():null;
-    };
+    window._fbGet=async(path)=>{const snap=await get(ref(db,path));return snap.exists()?snap.val():null;};
     window._fbDelete=async(path)=>await remove(ref(db,path));
     window._fbUpdate=async(path,data)=>await update(ref(db,path),data);
     window._fbReady=true;
@@ -59,14 +55,11 @@ const PIN="743125";
 const FIXED_COST=100000;
 const PROFIT_TARGET=63000;
 
-let pinEntered=false,pinVal="",pinError=false;
+let pinEntered=false,pinError=false;
 let tab="pnl",logsFilter="all";
-let allData={cart:[],rep:[],cash:[],expense:[]};
-let loading=false;
-let editModal=null;
-let lastRefresh=null;
+let allData={cart:[],reps:[],cash:[],expenses:[]};
+let loading=false,editModal=null,lastRefresh=null;
 
-function getThisMonth(){return new Date().toISOString().slice(0,7).replace("-","_")}
 function getToday(){return new Date().toISOString().slice(0,10)}
 function fmt(n){return n>=100000?"₹"+(n/100000).toFixed(1)+"L":n>=1000?"₹"+Math.round(n/1000)+"K":"₹"+Math.round(n)}
 function pct(v,t){return Math.min(100,Math.round((v/t)*100))}
@@ -75,8 +68,6 @@ function sigColor(p){return p>=100?"#27ae60":p>=70?"#E27F1F":"#e74c3c"}
 async function loadData(){
   loading=true;render();
   try{
-    const month=getThisMonth();
-    // Get all dates in this month so far
     const now=new Date();
     const days=now.getDate();
     const yr=now.getFullYear();
@@ -84,15 +75,14 @@ async function loadData(){
     const dates=[];
     for(let d=1;d<=days;d++) dates.push(`${yr}_${mo}_${String(d).padStart(2,"0")}`);
 
-    const types=["cart","rep","cash","expenses"];
-    const keys=["cart","rep","cash","expense"];
+    const types=["cart","reps","cash","expenses"];
     for(let t=0;t<types.length;t++){
-      allData[keys[t]]=[];
+      allData[types[t]]=[];
       for(const date of dates){
         const val=await window._fbGet(types[t]+"/"+date);
         if(val){
           Object.entries(val).forEach(([fbKey,record])=>{
-            allData[keys[t]].push({...record,_fbKey:fbKey,_fbPath:types[t]+"/"+date+"/"+fbKey});
+            allData[types[t]].push({...record,_fbKey:fbKey,_fbPath:types[t]+"/"+date+"/"+fbKey});
           });
         }
       }
@@ -107,59 +97,37 @@ async function deleteEntry(path){
   try{await window._fbDelete(path);}catch(e){alert("Delete failed.");}
   loadData();
 }
-
-function openEdit(record){
-  editModal={record,fields:{}};
-  render();
-}
-
+function openEdit(record){editModal={record,fields:{}};render();}
 async function saveEdit(){
   const{record,fields}=editModal;
-  try{
-    await window._fbUpdate(record._fbPath, fields);
-    editModal=null;
-    loadData();
-  }catch(e){alert("Save failed. Try again.");}
+  try{await window._fbUpdate(record._fbPath,fields);editModal=null;loadData();}
+  catch(e){alert("Save failed.");}
 }
 
 function render(){
   const root=document.getElementById("root");
-
   if(!pinEntered){
-    root.innerHTML=`
-      <div class="pin-page">
-        <div class="pin-card">
-          <div style="font-size:40px;margin-bottom:12px">🔒</div>
-          <div style="font-family:'Playfair Display',serif;font-size:24px;color:#fff;font-weight:700;margin-bottom:4px">WATHANZI</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:24px;text-transform:uppercase;letter-spacing:2px">Founder Dashboard</div>
-          <input id="pin-input" type="password" maxlength="10" placeholder="Enter PIN"
-            style="width:100%;padding:12px;border-radius:12px;border:2px solid ${pinError?"#e74c3c":"rgba(255,255,255,0.2)"};background:rgba(255,255,255,0.08);color:#fff;font-size:20px;text-align:center;letter-spacing:6px;outline:none;box-sizing:border-box;font-family:'Montserrat',sans-serif"
-            onkeydown="if(event.key==='Enter')checkPin(this.value)"/>
-          ${pinError?`<div style="color:#e74c3c;font-size:12px;margin-top:8px">Incorrect PIN</div>`:""}
-          <button onclick="checkPin(document.getElementById('pin-input').value)"
-            style="margin-top:16px;width:100%;padding:14px;background:linear-gradient(135deg,#2c2c54,#474787);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif">
-            Enter →
-          </button>
-        </div>
-      </div>`;
+    root.innerHTML=`<div class="pin-page"><div class="pin-card">
+      <div style="font-size:40px;margin-bottom:12px">🔒</div>
+      <div style="font-family:'Playfair Display',serif;font-size:24px;color:#fff;font-weight:700;margin-bottom:4px">WATHANZI</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:24px;text-transform:uppercase;letter-spacing:2px">Founder Dashboard</div>
+      <input id="pin-input" type="password" maxlength="10" placeholder="Enter PIN"
+        style="width:100%;padding:12px;border-radius:12px;border:2px solid ${pinError?"#e74c3c":"rgba(255,255,255,0.2)"};background:rgba(255,255,255,0.08);color:#fff;font-size:20px;text-align:center;letter-spacing:6px;outline:none;box-sizing:border-box;font-family:'Montserrat',sans-serif"
+        onkeydown="if(event.key==='Enter')checkPin(this.value)"/>
+      ${pinError?`<div style="color:#e74c3c;font-size:12px;margin-top:8px">Incorrect PIN</div>`:""}
+      <button onclick="checkPin(document.getElementById('pin-input').value)"
+        style="margin-top:16px;width:100%;padding:14px;background:linear-gradient(135deg,#2c2c54,#474787);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif">
+        Enter →</button>
+    </div></div>`;
     return;
   }
-
   if(loading){
-    root.innerHTML=`
-      <div class="hdr">
-        <div><div style="font-family:'Playfair Display',serif;font-size:22px;color:#fff;letter-spacing:2px">WATHANZI</div></div>
-      </div>
-      <div class="loading">⏳ Loading data from Firebase...</div>`;
+    root.innerHTML=`<div class="hdr"><div><div style="font-family:'Playfair Display',serif;font-size:22px;color:#fff">WATHANZI</div></div></div><div class="loading">⏳ Loading data from Firebase...</div>`;
     return;
   }
+  if(editModal){renderEditModal(root);return;}
 
-  if(editModal){
-    renderEditModal(root);return;
-  }
-
-  // ── COMPUTE ──
-  const{cart,rep,cash,expense}=allData;
+  const{cart,reps:rep,cash,expenses:expense}=allData;
   const today=getToday();
   const todayCart=cart.filter(l=>l.date===today);
   const todayRep=rep.filter(l=>l.date===today);
@@ -171,20 +139,16 @@ function render(){
   const varExpenses=expense.reduce((s,l)=>s+(l.totalExpense||0),0);
   const totalExpenses=FIXED_COST+varExpenses;
   const grossProfit=totalRevenue-totalExpenses;
-
   const cartUnits=cart.reduce((s,l)=>s+(l.totalUnits||0),0);
   const cartCash=cart.reduce((s,l)=>s+(l.cash||0),0);
   const cartUPI=cart.reduce((s,l)=>s+(l.upi||0),0);
-
   const monthVisits=b2bReps.reduce((s,r)=>s+(r.visits||0),0);
   const monthSamplings=b2bReps.reduce((s,r)=>s+(r.samplings||0),0);
   const monthClosed=b2bReps.reduce((s,r)=>s+(r.closedAccounts||0),0);
   const monthUnits=b2bReps.reduce((s,r)=>s+(r.unitsDelivered||0),0);
   const monthB2BRev=b2bReps.reduce((s,r)=>s+(r.revenueCollected||0),0);
-
   const dayOfMonth=new Date().getDate();
   const daysInMonth=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
-
   const totalEntries=cart.length+rep.length+cash.length+expense.length;
 
   root.innerHTML=`
@@ -196,7 +160,7 @@ function render(){
       <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
     </div>
     <div class="tabs">
-      ${[["pnl","📊 P&L"],["today","📅 Today"],["b2b","🤝 B2B"],["cart","🛒 Cart"],["logs","📋 Logs (${totalEntries})"]].map(([t,l])=>`<button class="tab ${tab===t?"active":""}" onclick="tab='${t}';render()">${l.replace("${totalEntries}",totalEntries)}</button>`).join("")}
+      ${[["pnl","📊 P&L"],["today","📅 Today"],["b2b","🤝 B2B"],["cart","🛒 Cart"],["logs","📋 Logs ("+totalEntries+")"]].map(([t,l])=>`<button class="tab ${tab===t?"active":""}" onclick="tab='${t}';render()">${l}</button>`).join("")}
     </div>
     <div class="sec" id="tab-content"></div>
     <div style="text-align:center;color:rgba(255,255,255,0.2);font-size:11px;margin-top:20px;padding:0 16px">
@@ -205,7 +169,6 @@ function render(){
 
   const content=document.getElementById("tab-content");
 
-  // ══ P&L ══
   if(tab==="pnl"){
     const phaseOn=grossProfit>=PROFIT_TARGET;
     content.innerHTML=`
@@ -218,44 +181,37 @@ function render(){
           <div style="width:${Math.min(100,pct(Math.max(0,grossProfit),PROFIT_TARGET))}%;height:100%;background:#fff;border-radius:99px"></div>
         </div>
       </div>
-
       <div class="sec-title">Revenue This Month</div>
       <div class="pnl-card">
-        ${[["🛒 Cart Revenue",fmt(cartRev),"rgba(39,174,96,0.9)"],["💰 Cash Collections",fmt(cashRev),"rgba(39,128,227,0.9)"],["📦 Total Revenue",fmt(totalRevenue),"#fff"]].map(([k,v,c],i)=>`<div class="pnl-row" style="${i===2?"border:none;padding-top:14px;margin-top:4px":""}"><span style="color:rgba(255,255,255,0.6)">${k}</span><strong style="color:${c};font-size:${i===2?18:15}px">${v}</strong></div>`).join("")}
+        ${[["🛒 Cart Revenue",fmt(cartRev),"rgba(39,174,96,0.9)"],["💰 Cash Collections",fmt(cashRev),"rgba(39,128,227,0.9)"],["📦 Total Revenue",fmt(totalRevenue),"#fff"]].map(([k,v,c],i)=>`<div class="pnl-row" style="${i===2?"border:none;padding-top:14px":""}"><span style="color:rgba(255,255,255,0.6)">${k}</span><strong style="color:${c};font-size:${i===2?18:15}px">${v}</strong></div>`).join("")}
       </div>
-
       <div class="sec-title">Expenses This Month</div>
       <div class="pnl-card">
-        ${[["🏭 Fixed Costs",fmt(FIXED_COST),"rgba(231,76,60,0.8)"],["📉 Variable Expenses",fmt(varExpenses),"rgba(231,76,60,0.8)"],["📊 Total Expenses",fmt(totalExpenses),"#e74c3c"]].map(([k,v,c],i)=>`<div class="pnl-row" style="${i===2?"border:none;padding-top:14px;margin-top:4px":""}"><span style="color:rgba(255,255,255,0.6)">${k}</span><strong style="color:${c};font-size:${i===2?18:15}px">${v}</strong></div>`).join("")}
+        ${[["🏭 Fixed Costs",fmt(FIXED_COST),"rgba(231,76,60,0.8)"],["📉 Variable Expenses",fmt(varExpenses),"rgba(231,76,60,0.8)"],["📊 Total Expenses",fmt(totalExpenses),"#e74c3c"]].map(([k,v,c],i)=>`<div class="pnl-row" style="${i===2?"border:none;padding-top:14px":""}"><span style="color:rgba(255,255,255,0.6)">${k}</span><strong style="color:${c};font-size:${i===2?18:15}px">${v}</strong></div>`).join("")}
       </div>
-
       <div class="sec-title">Net P&L</div>
       <div class="pnl-card">
         <div class="pnl-row"><span style="color:rgba(255,255,255,0.6)">Total Revenue</span><strong style="color:#27ae60">${fmt(totalRevenue)}</strong></div>
         <div class="pnl-row"><span style="color:rgba(255,255,255,0.6)">Total Expenses</span><strong style="color:#e74c3c">− ${fmt(totalExpenses)}</strong></div>
-        <div class="pnl-row" style="border:none;padding-top:14px;margin-top:4px">
+        <div class="pnl-row" style="border:none;padding-top:14px">
           <span style="font-weight:700;font-size:15px">Net ${grossProfit>=0?"Profit":"Loss"}</span>
           <strong style="font-size:22px;color:${grossProfit>=0?"#27ae60":"#e74c3c"}">${fmt(Math.abs(grossProfit))} ${grossProfit>=0?"📈":"📉"}</strong>
         </div>
       </div>
-
       <div class="sec-title">Month Progress · Day ${dayOfMonth} / ${daysInMonth}</div>
       <div style="background:rgba(255,255,255,0.07);border-radius:12px;padding:14px">
         <div class="bar-bg"><div class="bar-fill" style="width:${pct(dayOfMonth,daysInMonth)}%;background:#e7aa51"></div></div>
         <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:6px">${pct(dayOfMonth,daysInMonth)}% of month elapsed</div>
       </div>`;
   }
-
-  // ══ TODAY ══
   else if(tab==="today"){
     const tRevenue=todayCart.reduce((s,l)=>s+(l.totalRevenue||0),0)+cash.filter(l=>l.date===today).reduce((s,l)=>s+(l.grandTotal||0),0);
     const tExp=expense.filter(l=>l.date===today).reduce((s,l)=>s+(l.totalExpense||0),0);
     const tVisits=todayRep.reduce((s,r)=>s+(r.visits||0),0);
     const tClosed=todayRep.reduce((s,r)=>s+(r.closedAccounts||0),0);
     const tCartUnits=todayCart.reduce((s,l)=>s+(l.totalUnits||0),0);
-
     content.innerHTML=`
-      <div class="sec-title">Today at a Glance · ${new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short"})}</div>
+      <div class="sec-title">Today · ${new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short"})}</div>
       <div class="grid2">
         ${[["💰","Revenue",fmt(tRevenue)],["📉","Expenses",fmt(tExp)],["🛒","Cart Units",tCartUnits+" units"],["🤝","B2B Visits",tVisits+" visits"],["✅","Accounts Closed",tClosed]].map(([ic,lb,v])=>`<div class="kpi-card"><div style="font-size:20px;margin-bottom:6px">${ic}</div><div style="font-size:10px;color:rgba(255,255,255,0.45);font-weight:600;text-transform:uppercase">${lb}</div><div style="font-size:20px;font-weight:700;font-family:'Playfair Display',serif;color:#fff;margin-top:3px">${v}</div></div>`).join("")}
       </div>
@@ -264,18 +220,16 @@ function render(){
       <div class="sec-title">Today's Cart Reports (${todayCart.length})</div>
       ${todayCart.length===0?`<div class="empty">No cart reports today yet.</div>`:todayCart.map(l=>cartCard(l)).join("")}`;
   }
-
-  // ══ B2B ══
   else if(tab==="b2b"){
     content.innerHTML=`
       <div class="sec-title">B2B Monthly Performance</div>
       <div class="grid2">
-        ${[["📍","Visits",monthVisits,15*25],["🧪","Samplings",monthSamplings,4*25],["✅","Closed",monthClosed,13],["📦","Units Delivered",monthUnits,3450]].map(([ic,lb,v,tgt])=>{
+        ${[["📍","Visits",monthVisits,375],["🧪","Samplings",monthSamplings,100],["✅","Closed",monthClosed,13],["📦","Units",monthUnits,3450]].map(([ic,lb,v,tgt])=>{
           const p=pct(v,tgt);const c=sigColor(p);
-          return `<div class="kpi-card"><div style="font-size:20px;margin-bottom:6px">${ic}</div><div style="font-size:10px;color:rgba(255,255,255,0.45);font-weight:600;text-transform:uppercase">${lb}</div><div style="font-size:22px;font-weight:700;font-family:'Playfair Display',serif;color:#fff;margin-top:3px">${v.toLocaleString("en-IN")}</div><div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">Target: ${tgt.toLocaleString("en-IN")}</div><div class="bar-bg"><div class="bar-fill" style="width:${p}%;background:${c}"></div></div><div style="font-size:11px;font-weight:700;color:${c};margin-top:4px">${p}%</div></div>`;
+          return `<div class="kpi-card"><div style="font-size:20px;margin-bottom:6px">${ic}</div><div style="font-size:10px;color:rgba(255,255,255,0.45);font-weight:600;text-transform:uppercase">${lb}</div><div style="font-size:22px;font-weight:700;font-family:'Playfair Display',serif;color:#fff;margin-top:3px">${v}</div><div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">Target: ${tgt}</div><div class="bar-bg"><div class="bar-fill" style="width:${p}%;background:${c}"></div></div><div style="font-size:11px;font-weight:700;color:${c};margin-top:4px">${p}%</div></div>`;
         }).join("")}
       </div>
-      <div class="sec-title">Revenue Collected (B2B)</div>
+      <div class="sec-title">B2B Revenue</div>
       <div class="pnl-card">
         <div class="pnl-row"><span style="color:rgba(255,255,255,0.6)">Collected This Month</span><strong style="color:#27ae60;font-size:18px">${fmt(monthB2BRev)}</strong></div>
         <div class="pnl-row" style="border:none"><span style="color:rgba(255,255,255,0.6)">Target</span><strong style="color:rgba(255,255,255,0.4)">₹69,000</strong></div>
@@ -284,8 +238,6 @@ function render(){
       <div class="sec-title">B2B Rep Logs (${b2bReps.length})</div>
       ${b2bReps.length===0?`<div class="empty">No B2B reports this month.</div>`:[...b2bReps].reverse().map(r=>repCard(r)).join("")}`;
   }
-
-  // ══ CART ══
   else if(tab==="cart"){
     const flavourTotals={};
     cart.forEach(l=>(l.soldItems||[]).forEach(it=>{
@@ -294,22 +246,19 @@ function render(){
       flavourTotals[it.flavour].amount+=it.amount;
     }));
     const flavourRows=Object.entries(flavourTotals).sort((a,b)=>b[1].qty-a[1].qty);
-
     content.innerHTML=`
       <div class="sec-title">Cart Monthly Summary</div>
       <div class="grid2">
         ${[["🛒","Units Sold",cartUnits,"Target: 2,000"],["💰","Revenue",fmt(cartRev),"Target: ₹60K"],["💵","Cash",fmt(cartCash),""],["📱","UPI",fmt(cartUPI),""]].map(([ic,lb,v,sub])=>`<div class="kpi-card"><div style="font-size:20px;margin-bottom:6px">${ic}</div><div style="font-size:10px;color:rgba(255,255,255,0.45);font-weight:600;text-transform:uppercase">${lb}</div><div style="font-size:20px;font-weight:700;font-family:'Playfair Display',serif;color:#fff;margin-top:3px">${v}</div>${sub?`<div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">${sub}</div>`:""}</div>`).join("")}
       </div>
       ${flavourRows.length>0?`
-        <div class="sec-title">Top Flavours This Month</div>
+        <div class="sec-title">Top Flavours</div>
         <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px">
-          ${flavourRows.slice(0,8).map(([name,data])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.07)"><span style="font-size:13px;color:rgba(255,255,255,0.8)">${name}</span><div style="text-align:right"><div style="font-size:14px;font-weight:700">${data.qty} units</div><div style="font-size:11px;color:rgba(255,255,255,0.35)">${fmt(data.amount)}</div></div></div>`).join("")}
+          ${flavourRows.slice(0,8).map(([name,d])=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.07)"><span style="font-size:13px;color:rgba(255,255,255,0.8)">${name}</span><div style="text-align:right"><div style="font-size:14px;font-weight:700">${d.qty} units</div><div style="font-size:11px;color:rgba(255,255,255,0.35)">${fmt(d.amount)}</div></div></div>`).join("")}
         </div>`:""}
       <div class="sec-title">Daily Cart Reports (${cart.length})</div>
       ${cart.length===0?`<div class="empty">No cart reports this month.</div>`:[...cart].reverse().map(l=>cartCard(l)).join("")}`;
   }
-
-  // ══ LOGS ══
   else if(tab==="logs"){
     const allLogs=[
       ...cart.map(l=>({...l,_type:"cart"})),
@@ -318,30 +267,26 @@ function render(){
       ...expense.map(l=>({...l,_type:"expense"}))
     ].sort((a,b)=>new Date(b.submittedAt||0)-new Date(a.submittedAt||0));
     const filtered=logsFilter==="all"?allLogs:allLogs.filter(l=>l._type===logsFilter);
-
     content.innerHTML=`
-      <div class="sec-title">All Entries This Month (${allLogs.length})</div>
+      <div class="sec-title">All Entries (${allLogs.length})</div>
       <div class="filter-row">
         ${["all","cart","rep","cash","expense"].map(f=>`<button class="filter-btn ${logsFilter===f?"active":""}" onclick="logsFilter='${f}';render()">${f.charAt(0).toUpperCase()+f.slice(1)}</button>`).join("")}
       </div>
-      ${filtered.length===0?`<div class="empty">No entries found.</div>`:
-        filtered.map(l=>{
-          if(l._type==="rep")return repCard(l);
-          if(l._type==="cart")return cartCard(l);
-          if(l._type==="cash")return cashCard(l);
-          return expenseCard(l);
-        }).join("")}`;
+      ${filtered.length===0?`<div class="empty">No entries found.</div>`:filtered.map(l=>{
+        if(l._type==="rep")return repCard(l);
+        if(l._type==="cart")return cartCard(l);
+        if(l._type==="cash")return cashCard(l);
+        return expenseCard(l);
+      }).join("")}`;
   }
 }
 
-// ── CARD RENDERERS ──────────────────────────────────────────────────────
 function repCard(r){
   const moved=(r.movedAccounts||[]).filter(m=>m.name);
   return `<div class="log-card">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
       <div><div style="font-weight:700;font-size:14px;font-family:'Playfair Display',serif">${r.repName||"Rep"}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">${r.date||""} · ${r.brand||""} · ${r.repRole==="existing"?"Existing":"New Acquisitions"}</div>
-      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">${r.date||""} · ${r.brand||""}</div></div>
       <div style="background:rgba(255,255,255,0.12);color:#fff;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700">${r.visits||0} visits</div>
     </div>
     <div style="display:flex;gap:10px;font-size:12px;color:rgba(255,255,255,0.55);flex-wrap:wrap;margin-bottom:6px">
@@ -352,124 +297,84 @@ function repCard(r){
     <div class="action-row">
       <button class="edit-btn" onclick='openEdit(${JSON.stringify(r).replace(/'/g,"&#39;")})'>✏️ Edit</button>
       <button class="del-btn" onclick="deleteEntry('${r._fbPath}')">🗑 Delete</button>
-    </div>
-  </div>`;
+    </div></div>`;
 }
 
 function cartCard(l){
   return `<div class="log-card">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
       <div><div style="font-weight:700;font-size:14px;font-family:'Playfair Display',serif">${l.operatorName||"Cart"}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">${l.date||""}</div>
-      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">${l.date||""}</div></div>
       <div style="background:rgba(255,255,255,0.12);color:#fff;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700">${l.totalUnits||0} units</div>
     </div>
     <div style="display:flex;gap:10px;font-size:12px;color:rgba(255,255,255,0.55);flex-wrap:wrap;margin-bottom:6px">
-      <span>💰 ${fmt(l.totalRevenue||0)}</span><span>💵 Cash ₹${l.cash||0}</span><span>📱 UPI ₹${l.upi||0}</span>
+      <span>💰 ${fmt(l.totalRevenue||0)}</span><span>💵 ₹${l.cash||0}</span><span>📱 ₹${l.upi||0}</span>
     </div>
-    ${(l.soldItems||[]).filter(it=>it.qty>0).slice(0,5).map(it=>`<div style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:2px">${it.flavour}: ${it.qty} pcs · ₹${it.amount}</div>`).join("")}
+    ${(l.soldItems||[]).filter(it=>it.qty>0).slice(0,5).map(it=>`<div style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:2px">${it.flavour}: ${it.qty} · ₹${it.amount}</div>`).join("")}
     ${l.notes?`<div style="font-size:12px;color:rgba(255,255,255,0.4);font-style:italic;border-top:1px solid rgba(255,255,255,0.07);padding-top:8px;margin-top:8px">💬 ${l.notes}</div>`:""}
     <div class="action-row">
       <button class="edit-btn" onclick='openEdit(${JSON.stringify(l).replace(/'/g,"&#39;")})'>✏️ Edit</button>
       <button class="del-btn" onclick="deleteEntry('${l._fbPath}')">🗑 Delete</button>
-    </div>
-  </div>`;
+    </div></div>`;
 }
 
 function cashCard(l){
   return `<div class="log-card">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
       <div><div style="font-weight:700;font-size:14px;font-family:'Playfair Display',serif">Cash Collection</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">${l.date||""}</div>
-      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">${l.date||""}</div></div>
       <div style="background:rgba(255,255,255,0.12);color:#fff;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700">${fmt(l.grandTotal||0)}</div>
     </div>
-    <div style="display:flex;gap:10px;font-size:12px;color:rgba(255,255,255,0.55);flex-wrap:wrap;margin-bottom:6px">
+    <div style="display:flex;gap:10px;font-size:12px;color:rgba(255,255,255,0.55);flex-wrap:wrap">
       ${(l.channels||[]).filter(c=>c.total>0).map(c=>`<span>${c.channel}: ${fmt(c.total)}</span>`).join("")}
     </div>
     ${l.notes?`<div style="font-size:12px;color:rgba(255,255,255,0.4);font-style:italic;border-top:1px solid rgba(255,255,255,0.07);padding-top:8px;margin-top:8px">💬 ${l.notes}</div>`:""}
     <div class="action-row">
       <button class="edit-btn" onclick='openEdit(${JSON.stringify(l).replace(/'/g,"&#39;")})'>✏️ Edit</button>
       <button class="del-btn" onclick="deleteEntry('${l._fbPath}')">🗑 Delete</button>
-    </div>
-  </div>`;
+    </div></div>`;
 }
 
 function expenseCard(l){
   return `<div class="log-card">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
       <div><div style="font-weight:700;font-size:14px;font-family:'Playfair Display',serif">Expenses</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">${l.date||""}</div>
-      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">${l.date||""}</div></div>
       <div style="background:rgba(255,255,255,0.12);color:#fff;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700">${fmt(l.totalExpense||0)}</div>
     </div>
-    <div style="display:flex;gap:10px;font-size:12px;color:rgba(255,255,255,0.55);flex-wrap:wrap;margin-bottom:6px">
+    <div style="display:flex;gap:10px;font-size:12px;color:rgba(255,255,255,0.55);flex-wrap:wrap">
       ${(l.items||[]).map(it=>`<span>${it.category||"Misc"}: ₹${it.amount}</span>`).join("")}
     </div>
     ${l.notes?`<div style="font-size:12px;color:rgba(255,255,255,0.4);font-style:italic;border-top:1px solid rgba(255,255,255,0.07);padding-top:8px;margin-top:8px">💬 ${l.notes}</div>`:""}
     <div class="action-row">
       <button class="edit-btn" onclick='openEdit(${JSON.stringify(l).replace(/'/g,"&#39;")})'>✏️ Edit</button>
       <button class="del-btn" onclick="deleteEntry('${l._fbPath}')">🗑 Delete</button>
-    </div>
-  </div>`;
+    </div></div>`;
 }
 
 function renderEditModal(root){
   const r=editModal.record;
-  const isRep=r.type==="rep";
-  const isCart=r.type==="cart";
-  const isCash=r.type==="cash";
-
-  root.innerHTML=`
-    <div class="modal-overlay">
-      <div class="modal">
-        <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:16px">
-          Edit ${r.type?.charAt(0).toUpperCase()+r.type?.slice(1)} Entry · ${r.date||""}
-        </div>
-        ${isRep?`
-          <label class="modal-label">Visits Done</label>
-          <input class="modal-input" type="number" id="ef1" value="${r.visits||0}"/>
-          <label class="modal-label">Samplings</label>
-          <input class="modal-input" type="number" id="ef2" value="${r.samplings||0}"/>
-          <label class="modal-label">Accounts Closed</label>
-          <input class="modal-input" type="number" id="ef3" value="${r.closedAccounts||0}"/>
-          <label class="modal-label">Units Delivered</label>
-          <input class="modal-input" type="number" id="ef4" value="${r.unitsDelivered||0}"/>
-          <label class="modal-label">Revenue Collected ₹</label>
-          <input class="modal-input" type="number" id="ef5" value="${r.revenueCollected||0}"/>
-          <label class="modal-label">Notes</label>
-          <textarea class="modal-input" id="ef6" style="height:60px;resize:vertical">${r.notes||""}</textarea>`
-        :isCart?`
-          <label class="modal-label">Total Units Sold</label>
-          <input class="modal-input" type="number" id="ef1" value="${r.totalUnits||0}"/>
-          <label class="modal-label">Total Revenue ₹</label>
-          <input class="modal-input" type="number" id="ef2" value="${r.totalRevenue||0}"/>
-          <label class="modal-label">Cash ₹</label>
-          <input class="modal-input" type="number" id="ef3" value="${r.cash||0}"/>
-          <label class="modal-label">UPI ₹</label>
-          <input class="modal-input" type="number" id="ef4" value="${r.upi||0}"/>
-          <label class="modal-label">Notes</label>
-          <textarea class="modal-input" id="ef5" style="height:60px;resize:vertical">${r.notes||""}</textarea>`
-        :isCash?`
-          <label class="modal-label">Grand Total ₹</label>
-          <input class="modal-input" type="number" id="ef1" value="${r.grandTotal||0}"/>
-          <label class="modal-label">Notes</label>
-          <textarea class="modal-input" id="ef2" style="height:60px;resize:vertical">${r.notes||""}</textarea>`
-        :`
-          <label class="modal-label">Total Expense ₹</label>
-          <input class="modal-input" type="number" id="ef1" value="${r.totalExpense||0}"/>
-          <label class="modal-label">Notes</label>
-          <textarea class="modal-input" id="ef2" style="height:60px;resize:vertical">${r.notes||""}</textarea>`}
-        <button onclick="collectAndSave('${r.type}')"
-          style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a6b,#2780e3);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif;margin-top:8px">
-          Save Changes ✓
-        </button>
-        <button onclick="editModal=null;render()"
-          style="width:100%;padding:12px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Montserrat',sans-serif;margin-top:8px">
-          Cancel
-        </button>
-      </div>
-    </div>`;
+  const isRep=r.type==="rep",isCart=r.type==="cart",isCash=r.type==="cash";
+  root.innerHTML=`<div class="modal-overlay"><div class="modal">
+    <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:16px">Edit ${(r.type||"").charAt(0).toUpperCase()+(r.type||"").slice(1)} · ${r.date||""}</div>
+    ${isRep?`<label class="modal-label">Visits</label><input class="modal-input" type="number" id="ef1" value="${r.visits||0}"/>
+      <label class="modal-label">Samplings</label><input class="modal-input" type="number" id="ef2" value="${r.samplings||0}"/>
+      <label class="modal-label">Closed</label><input class="modal-input" type="number" id="ef3" value="${r.closedAccounts||0}"/>
+      <label class="modal-label">Units Delivered</label><input class="modal-input" type="number" id="ef4" value="${r.unitsDelivered||0}"/>
+      <label class="modal-label">Revenue ₹</label><input class="modal-input" type="number" id="ef5" value="${r.revenueCollected||0}"/>
+      <label class="modal-label">Notes</label><textarea class="modal-input" id="ef6" style="height:60px">${r.notes||""}</textarea>`
+    :isCart?`<label class="modal-label">Units Sold</label><input class="modal-input" type="number" id="ef1" value="${r.totalUnits||0}"/>
+      <label class="modal-label">Revenue ₹</label><input class="modal-input" type="number" id="ef2" value="${r.totalRevenue||0}"/>
+      <label class="modal-label">Cash ₹</label><input class="modal-input" type="number" id="ef3" value="${r.cash||0}"/>
+      <label class="modal-label">UPI ₹</label><input class="modal-input" type="number" id="ef4" value="${r.upi||0}"/>
+      <label class="modal-label">Notes</label><textarea class="modal-input" id="ef5" style="height:60px">${r.notes||""}</textarea>`
+    :isCash?`<label class="modal-label">Grand Total ₹</label><input class="modal-input" type="number" id="ef1" value="${r.grandTotal||0}"/>
+      <label class="modal-label">Notes</label><textarea class="modal-input" id="ef2" style="height:60px">${r.notes||""}</textarea>`
+    :`<label class="modal-label">Total Expense ₹</label><input class="modal-input" type="number" id="ef1" value="${r.totalExpense||0}"/>
+      <label class="modal-label">Notes</label><textarea class="modal-input" id="ef2" style="height:60px">${r.notes||""}</textarea>`}
+    <button onclick="collectAndSave('${r.type}')" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a6b,#2780e3);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif;margin-top:8px">Save ✓</button>
+    <button onclick="editModal=null;render()" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:12px;font-size:14px;cursor:pointer;font-family:'Montserrat',sans-serif;margin-top:8px">Cancel</button>
+  </div></div>`;
 }
 
 function collectAndSave(type){
