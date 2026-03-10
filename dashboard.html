@@ -5,68 +5,51 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
   <title>Dashboard – Wathanzi</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, get, remove, update, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    const app=initializeApp({apiKey:"AIzaSyCiIpEt33eBLmna3YdXEbXZ4wLP5CLD20w",authDomain:"wathanzi.firebaseapp.com",databaseURL:"https://wathanzi-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"wathanzi",storageBucket:"wathanzi.firebasestorage.app",messagingSenderId:"456356745959",appId:"1:456356745959:web:aeb1adaeba3cc73cbdc842"});
+    const db=getDatabase(app);
+
+    window._fbGet=async(path)=>{
+      const snap=await get(ref(db,path));
+      return snap.exists()?snap.val():null;
+    };
+    window._fbDelete=async(path)=>await remove(ref(db,path));
+    window._fbUpdate=async(path,data)=>await update(ref(db,path),data);
+    window._fbReady=true;
+  </script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{min-height:100vh;background:linear-gradient(160deg,#0a0a0a 0%,#1a1a2e 100%);font-family:'Montserrat',sans-serif;color:#fff;padding-bottom:60px}
-    /* PIN */
+    body{min-height:100vh;background:linear-gradient(160deg,#0a0a0a,#1a1a2e);font-family:'Montserrat',sans-serif;color:#fff;padding-bottom:60px}
     .pin-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
     .pin-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:36px 28px;width:100%;max-width:320px;text-align:center}
-    /* Header */
     .hdr{display:flex;justify-content:space-between;align-items:center;padding:20px 16px 0}
-    .hdr-brand{font-family:'Playfair Display',serif;font-size:22px;color:#fff;letter-spacing:2px}
-    .hdr-sub{font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px}
-    .refresh-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Montserrat',sans-serif}
-    /* Tabs */
     .tabs{display:flex;gap:6px;padding:14px 16px 0;overflow-x:auto}
     .tab{flex-shrink:0;padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.5);font-size:11px;font-weight:600;cursor:pointer;font-family:'Montserrat',sans-serif;white-space:nowrap}
     .tab.active{background:rgba(255,255,255,0.18);color:#fff;border-color:rgba(255,255,255,0.3)}
-    /* Sections */
     .sec{padding:0 16px}
     .sec-title{font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1.5px;margin:20px 0 10px}
-    /* Cards */
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .kpi-card{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px}
-    .kpi-icon{font-size:20px;margin-bottom:6px}
-    .kpi-label{font-size:10px;color:rgba(255,255,255,0.45);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
-    .kpi-value{font-size:22px;font-weight:700;font-family:'Playfair Display',serif;color:#fff;margin-top:3px}
-    .kpi-sub{font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px}
-    /* P&L */
     .pnl-card{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:16px}
     .pnl-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.07);font-size:14px}
-    .pnl-row:last-child{border:none;padding-top:14px;margin-top:4px}
-    /* Log cards */
     .log-card{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px;margin-bottom:10px}
-    .log-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
-    .log-name{font-weight:700;font-size:14px;color:#fff;font-family:'Playfair Display',serif}
-    .log-meta{font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px}
-    .log-badge{background:rgba(255,255,255,0.12);color:#fff;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700}
-    .log-stats{display:flex;gap:10px;font-size:12px;color:rgba(255,255,255,0.55);flex-wrap:wrap;margin-bottom:6px}
-    .moved-pill{background:rgba(231,170,81,0.15);border:1px solid rgba(231,170,81,0.5);border-radius:8px;padding:4px 10px;font-size:12px;color:#e7aa51;margin-bottom:4px}
-    .notes-text{font-size:12px;color:rgba(255,255,255,0.4);font-style:italic;border-top:1px solid rgba(255,255,255,0.07);padding-top:8px;margin-top:8px}
-    /* Action buttons */
+    .bar-bg{background:rgba(255,255,255,0.1);border-radius:99px;height:7px;overflow:hidden;margin-top:6px}
+    .bar-fill{height:100%;border-radius:99px}
     .action-row{display:flex;gap:6px;margin-top:10px}
     .edit-btn{flex:1;padding:7px;background:rgba(39,128,227,0.2);border:1px solid rgba(39,128,227,0.4);color:#5ba8f5;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Montserrat',sans-serif}
     .del-btn{flex:1;padding:7px;background:rgba(192,57,43,0.2);border:1px solid rgba(192,57,43,0.4);color:#e74c3c;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Montserrat',sans-serif}
-    /* Edit modal */
-    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:flex-end;justify-content:center;z-index:100;padding:0}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:flex;align-items:flex-end;justify-content:center;z-index:100}
     .modal{background:#1a1a2e;border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto}
-    .modal-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:16px}
-    .modal-label{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;margin-top:12px}
-    .modal-input{width:100%;padding:10px 14px;border:1.5px solid rgba(255,255,255,0.15);border-radius:10px;font-size:14px;color:#fff;background:rgba(255,255,255,0.08);outline:none;box-sizing:border-box;font-family:'Montserrat',sans-serif}
-    .modal-save{width:100%;padding:14px;background:linear-gradient(135deg,#1a3a6b,#2780e3);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif;margin-top:16px}
-    .modal-cancel{width:100%;padding:12px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Montserrat',sans-serif;margin-top:8px}
-    /* Bar */
-    .bar-bg{background:rgba(255,255,255,0.1);border-radius:99px;height:7px;overflow:hidden;margin-top:6px}
-    .bar-fill{height:100%;border-radius:99px;transition:width 0.8s ease}
-    /* Phase card */
-    .phase-card{border-radius:16px;padding:20px;margin-top:16px}
-    /* Empty */
+    .modal-input{width:100%;padding:10px 14px;border:1.5px solid rgba(255,255,255,0.15);border-radius:10px;font-size:14px;color:#fff;background:rgba(255,255,255,0.08);outline:none;box-sizing:border-box;font-family:'Montserrat',sans-serif;margin-bottom:12px}
+    .modal-label{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.45);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px}
+    .loading{text-align:center;padding:60px 20px;color:rgba(255,255,255,0.4);font-size:14px}
     .empty{text-align:center;color:rgba(255,255,255,0.25);padding:40px 20px;font-size:14px}
-    /* Filter */
     .filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
     .filter-btn{padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:11px;font-weight:600;cursor:pointer;font-family:'Montserrat',sans-serif}
     .filter-btn.active{background:rgba(255,255,255,0.18);color:#fff;border-color:rgba(255,255,255,0.35)}
-    input[type=number],textarea,select{font-family:'Montserrat',sans-serif}
+    .refresh-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Montserrat',sans-serif}
   </style>
 </head>
 <body>
@@ -76,64 +59,85 @@ const PIN="743125";
 const FIXED_COST=100000;
 const PROFIT_TARGET=63000;
 
-// Storage keys
-const KEYS={cart:"wtz_cart",rep:"wtz_reps",cash:"wtz_cash",expense:"wtz_expenses"};
+let pinEntered=false,pinVal="",pinError=false;
+let tab="pnl",logsFilter="all";
+let allData={cart:[],rep:[],cash:[],expense:[]};
+let loading=false;
+let editModal=null;
+let lastRefresh=null;
 
-function getThisMonth(){return new Date().toISOString().slice(0,7)}
+function getThisMonth(){return new Date().toISOString().slice(0,7).replace("-","_")}
 function getToday(){return new Date().toISOString().slice(0,10)}
 function fmt(n){return n>=100000?"₹"+(n/100000).toFixed(1)+"L":n>=1000?"₹"+Math.round(n/1000)+"K":"₹"+Math.round(n)}
 function pct(v,t){return Math.min(100,Math.round((v/t)*100))}
 function sigColor(p){return p>=100?"#27ae60":p>=70?"#E27F1F":"#e74c3c"}
-function getAllFromKey(k){
-  try{const m=getThisMonth();return JSON.parse(localStorage.getItem(k)||"[]").filter(r=>r.date&&r.date.startsWith(m));}
-  catch{return[]}
-}
-function deleteRecord(k,idx){
+
+async function loadData(){
+  loading=true;render();
   try{
-    const all=JSON.parse(localStorage.getItem(k)||"[]");
-    const m=getThisMonth();
-    const monthly=all.filter(r=>r.date&&r.date.startsWith(m));
-    const record=monthly[idx];
-    const globalIdx=all.findIndex(r=>r.submittedAt===record.submittedAt);
-    if(globalIdx>-1){all.splice(globalIdx,1);localStorage.setItem(k,JSON.stringify(all));}
-  }catch(e){console.error(e)}
-}
-function saveRecord(k,idx,updated){
-  try{
-    const all=JSON.parse(localStorage.getItem(k)||"[]");
-    const m=getThisMonth();
-    const monthly=all.filter(r=>r.date&&r.date.startsWith(m));
-    const record=monthly[idx];
-    const globalIdx=all.findIndex(r=>r.submittedAt===record.submittedAt);
-    if(globalIdx>-1){all[globalIdx]={...all[globalIdx],...updated};localStorage.setItem(k,JSON.stringify(all));}
-  }catch(e){console.error(e)}
+    const month=getThisMonth();
+    // Get all dates in this month so far
+    const now=new Date();
+    const days=now.getDate();
+    const yr=now.getFullYear();
+    const mo=String(now.getMonth()+1).padStart(2,"0");
+    const dates=[];
+    for(let d=1;d<=days;d++) dates.push(`${yr}_${mo}_${String(d).padStart(2,"0")}`);
+
+    const types=["cart","rep","cash","expenses"];
+    const keys=["cart","rep","cash","expense"];
+    for(let t=0;t<types.length;t++){
+      allData[keys[t]]=[];
+      for(const date of dates){
+        const val=await window._fbGet(types[t]+"/"+date);
+        if(val){
+          Object.entries(val).forEach(([fbKey,record])=>{
+            allData[keys[t]].push({...record,_fbKey:fbKey,_fbPath:types[t]+"/"+date+"/"+fbKey});
+          });
+        }
+      }
+    }
+    lastRefresh=new Date();
+  }catch(e){console.error("Load error",e);}
+  loading=false;render();
 }
 
-// ── STATE ──────────────────────────────────────────────────────────────
-let pinEntered=false;
-let pinVal="";
-let pinError=false;
-let tab="pnl";
-let logsFilter="all";
-let editModal=null; // {key, idx, record}
+async function deleteEntry(path){
+  if(!confirm("Delete this entry? Cannot be undone."))return;
+  try{await window._fbDelete(path);}catch(e){alert("Delete failed.");}
+  loadData();
+}
+
+function openEdit(record){
+  editModal={record,fields:{}};
+  render();
+}
+
+async function saveEdit(){
+  const{record,fields}=editModal;
+  try{
+    await window._fbUpdate(record._fbPath, fields);
+    editModal=null;
+    loadData();
+  }catch(e){alert("Save failed. Try again.");}
+}
 
 function render(){
   const root=document.getElementById("root");
 
-  // ── PIN ──
   if(!pinEntered){
     root.innerHTML=`
       <div class="pin-page">
         <div class="pin-card">
           <div style="font-size:40px;margin-bottom:12px">🔒</div>
-          <div style="font-family:'Playfair Display',serif;font-size:22px;color:#fff;font-weight:700;margin-bottom:4px">WATHANZI</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:24px;text-transform:uppercase;letter-spacing:1px">Founder Dashboard</div>
-          <input id="pin-input" type="password" maxlength="6" placeholder="Enter PIN"
-            style="width:100%;padding:12px;border-radius:12px;border:2px solid ${pinError?"#e74c3c":"rgba(255,255,255,0.2)"};background:rgba(255,255,255,0.08);color:#fff;font-size:20px;text-align:center;letter-spacing:8px;outline:none;box-sizing:border-box;font-family:'Montserrat',sans-serif"
-            onkeydown="if(event.key==='Enter')checkPin(this.value)" oninput="pinVal=this.value"/>
+          <div style="font-family:'Playfair Display',serif;font-size:24px;color:#fff;font-weight:700;margin-bottom:4px">WATHANZI</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:24px;text-transform:uppercase;letter-spacing:2px">Founder Dashboard</div>
+          <input id="pin-input" type="password" maxlength="10" placeholder="Enter PIN"
+            style="width:100%;padding:12px;border-radius:12px;border:2px solid ${pinError?"#e74c3c":"rgba(255,255,255,0.2)"};background:rgba(255,255,255,0.08);color:#fff;font-size:20px;text-align:center;letter-spacing:6px;outline:none;box-sizing:border-box;font-family:'Montserrat',sans-serif"
+            onkeydown="if(event.key==='Enter')checkPin(this.value)"/>
           ${pinError?`<div style="color:#e74c3c;font-size:12px;margin-top:8px">Incorrect PIN</div>`:""}
           <button onclick="checkPin(document.getElementById('pin-input').value)"
-            style="margin-top:16px;width:100%;padding:14px;background:linear-gradient(135deg,#1a1a2e,#3a3a5e);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif;border:1px solid rgba(255,255,255,0.2)">
+            style="margin-top:16px;width:100%;padding:14px;background:linear-gradient(135deg,#2c2c54,#474787);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif">
             Enter →
           </button>
         </div>
@@ -141,35 +145,37 @@ function render(){
     return;
   }
 
-  // ── EDIT MODAL ──
-  if(editModal){
-    renderEditModal(root);
+  if(loading){
+    root.innerHTML=`
+      <div class="hdr">
+        <div><div style="font-family:'Playfair Display',serif;font-size:22px;color:#fff;letter-spacing:2px">WATHANZI</div></div>
+      </div>
+      <div class="loading">⏳ Loading data from Firebase...</div>`;
     return;
   }
 
-  // ── DATA ──
-  const cartLogs=getAllFromKey(KEYS.cart);
-  const repLogs=getAllFromKey(KEYS.rep);
-  const cashLogs=getAllFromKey(KEYS.cash);
-  const expenseLogs=getAllFromKey(KEYS.expense);
-  const todayRep=repLogs.filter(r=>r.date===getToday());
+  if(editModal){
+    renderEditModal(root);return;
+  }
 
-  // Revenue
-  const cartRev=cartLogs.reduce((s,l)=>s+(l.totalRevenue||0),0);
-  const cashRev=cashLogs.reduce((s,l)=>s+(l.grandTotal||0),0);
+  // ── COMPUTE ──
+  const{cart,rep,cash,expense}=allData;
+  const today=getToday();
+  const todayCart=cart.filter(l=>l.date===today);
+  const todayRep=rep.filter(l=>l.date===today);
+  const b2bReps=rep.filter(r=>r.brand==="B2B");
+
+  const cartRev=cart.reduce((s,l)=>s+(l.totalRevenue||0),0);
+  const cashRev=cash.reduce((s,l)=>s+(l.grandTotal||0),0);
   const totalRevenue=cartRev+cashRev;
-
-  // Expenses
-  const totalExpenses=expenseLogs.reduce((s,l)=>s+(l.totalExpense||0),0)+FIXED_COST;
+  const varExpenses=expense.reduce((s,l)=>s+(l.totalExpense||0),0);
+  const totalExpenses=FIXED_COST+varExpenses;
   const grossProfit=totalRevenue-totalExpenses;
 
-  // Cart
-  const cartUnits=cartLogs.reduce((s,l)=>s+(l.totalUnits||0),0);
-  const cartCash=cartLogs.reduce((s,l)=>s+(l.cash||0),0);
-  const cartUPI=cartLogs.reduce((s,l)=>s+(l.upi||0),0);
+  const cartUnits=cart.reduce((s,l)=>s+(l.totalUnits||0),0);
+  const cartCash=cart.reduce((s,l)=>s+(l.cash||0),0);
+  const cartUPI=cart.reduce((s,l)=>s+(l.upi||0),0);
 
-  // B2B rep
-  const b2bReps=repLogs.filter(r=>r.brand==="B2B");
   const monthVisits=b2bReps.reduce((s,r)=>s+(r.visits||0),0);
   const monthSamplings=b2bReps.reduce((s,r)=>s+(r.samplings||0),0);
   const monthClosed=b2bReps.reduce((s,r)=>s+(r.closedAccounts||0),0);
@@ -179,40 +185,35 @@ function render(){
   const dayOfMonth=new Date().getDate();
   const daysInMonth=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
 
-  const tabs=[
-    {id:"pnl",label:"📊 P&L"},
-    {id:"today",label:"📅 Today"},
-    {id:"b2b",label:"🤝 B2B"},
-    {id:"cart",label:"🛒 Cart"},
-    {id:"logs",label:"📋 Logs"}
-  ];
+  const totalEntries=cart.length+rep.length+cash.length+expense.length;
 
   root.innerHTML=`
     <div class="hdr">
       <div>
-        <div class="hdr-brand">WATHANZI</div>
-        <div class="hdr-sub">${new Date().toLocaleDateString("en-IN",{month:"long",year:"numeric"})} · Founder View</div>
+        <div style="font-family:'Playfair Display',serif;font-size:22px;color:#fff;letter-spacing:2px">WATHANZI</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px">${new Date().toLocaleDateString("en-IN",{month:"long",year:"numeric"})} · Live Dashboard</div>
       </div>
-      <button class="refresh-btn" onclick="render()">↻ Refresh</button>
+      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
     </div>
-
     <div class="tabs">
-      ${tabs.map(t=>`<button class="tab ${tab===t.id?"active":""}" onclick="tab='${t.id}';render()">${t.label}</button>`).join("")}
+      ${[["pnl","📊 P&L"],["today","📅 Today"],["b2b","🤝 B2B"],["cart","🛒 Cart"],["logs","📋 Logs (${totalEntries})"]].map(([t,l])=>`<button class="tab ${tab===t?"active":""}" onclick="tab='${t}';render()">${l.replace("${totalEntries}",totalEntries)}</button>`).join("")}
     </div>
-
-    <div class="sec" id="tab-content"></div>`;
+    <div class="sec" id="tab-content"></div>
+    <div style="text-align:center;color:rgba(255,255,255,0.2);font-size:11px;margin-top:20px;padding:0 16px">
+      ${lastRefresh?"Last synced: "+lastRefresh.toLocaleTimeString("en-IN")+" · Tap ↻ for latest":""}
+    </div>`;
 
   const content=document.getElementById("tab-content");
 
-  // ════════════════ P&L TAB ════════════════════════════════════════════
+  // ══ P&L ══
   if(tab==="pnl"){
-    const phaseTriggered=grossProfit>=PROFIT_TARGET;
+    const phaseOn=grossProfit>=PROFIT_TARGET;
     content.innerHTML=`
-      <div class="phase-card" style="background:${phaseTriggered?"linear-gradient(135deg,#1a6b3a,#27ae60)":"linear-gradient(135deg,#431F0F,#993F1D)"}">
-        <div style="font-size:26px;margin-bottom:4px">${phaseTriggered?"🚀":"🎯"}</div>
-        <div style="font-size:10px;font-weight:700;letter-spacing:2px;opacity:0.7">${phaseTriggered?"PHASE 2 TRIGGERED!":"PHASE 1 TARGET"}</div>
+      <div style="border-radius:16px;padding:20px;margin-top:16px;background:${phaseOn?"linear-gradient(135deg,#1a6b3a,#27ae60)":"linear-gradient(135deg,#431F0F,#993F1D)"}">
+        <div style="font-size:26px;margin-bottom:4px">${phaseOn?"🚀":"🎯"}</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:2px;opacity:0.7">${phaseOn?"PHASE 2 TRIGGERED!":"PHASE 1 TARGET"}</div>
         <div style="font-size:26px;font-weight:700;font-family:'Playfair Display',serif;margin-top:4px">${fmt(Math.abs(grossProfit))} ${grossProfit<0?"loss":"profit"}</div>
-        <div style="font-size:12px;opacity:0.65;margin-top:4px">${phaseTriggered?"Scale to 400 units/day!":fmt(Math.max(0,PROFIT_TARGET-grossProfit))+" away from Phase 2"}</div>
+        <div style="font-size:12px;opacity:0.65;margin-top:4px">${phaseOn?"Scale to 400 units/day!":fmt(Math.max(0,PROFIT_TARGET-grossProfit))+" away from Phase 2"}</div>
         <div style="margin-top:10px;background:rgba(255,255,255,0.2);border-radius:99px;height:8px">
           <div style="width:${Math.min(100,pct(Math.max(0,grossProfit),PROFIT_TARGET))}%;height:100%;background:#fff;border-radius:99px"></div>
         </div>
@@ -220,29 +221,21 @@ function render(){
 
       <div class="sec-title">Revenue This Month</div>
       <div class="pnl-card">
-        ${[
-          ["🛒 Cart Revenue",fmt(cartRev),"rgba(39,174,96,0.8)"],
-          ["💰 Cash Collections",fmt(cashRev),"rgba(39,128,227,0.8)"],
-          ["📦 Total Revenue",fmt(totalRevenue),"#fff"],
-        ].map(([k,v,c])=>`<div class="pnl-row"><span style="color:rgba(255,255,255,0.65)">${k}</span><strong style="color:${c};font-size:16px">${v}</strong></div>`).join("")}
+        ${[["🛒 Cart Revenue",fmt(cartRev),"rgba(39,174,96,0.9)"],["💰 Cash Collections",fmt(cashRev),"rgba(39,128,227,0.9)"],["📦 Total Revenue",fmt(totalRevenue),"#fff"]].map(([k,v,c],i)=>`<div class="pnl-row" style="${i===2?"border:none;padding-top:14px;margin-top:4px":""}"><span style="color:rgba(255,255,255,0.6)">${k}</span><strong style="color:${c};font-size:${i===2?18:15}px">${v}</strong></div>`).join("")}
       </div>
 
       <div class="sec-title">Expenses This Month</div>
       <div class="pnl-card">
-        ${[
-          ["🏭 Fixed Costs",fmt(FIXED_COST),"rgba(231,76,60,0.8)"],
-          ["📉 Variable Expenses",fmt(totalExpenses-FIXED_COST),"rgba(231,76,60,0.8)"],
-          ["📊 Total Expenses",fmt(totalExpenses),"#e74c3c"],
-        ].map(([k,v,c])=>`<div class="pnl-row"><span style="color:rgba(255,255,255,0.65)">${k}</span><strong style="color:${c};font-size:16px">${v}</strong></div>`).join("")}
+        ${[["🏭 Fixed Costs",fmt(FIXED_COST),"rgba(231,76,60,0.8)"],["📉 Variable Expenses",fmt(varExpenses),"rgba(231,76,60,0.8)"],["📊 Total Expenses",fmt(totalExpenses),"#e74c3c"]].map(([k,v,c],i)=>`<div class="pnl-row" style="${i===2?"border:none;padding-top:14px;margin-top:4px":""}"><span style="color:rgba(255,255,255,0.6)">${k}</span><strong style="color:${c};font-size:${i===2?18:15}px">${v}</strong></div>`).join("")}
       </div>
 
       <div class="sec-title">Net P&L</div>
       <div class="pnl-card">
-        <div class="pnl-row"><span style="color:rgba(255,255,255,0.65)">Revenue</span><strong style="color:#27ae60">${fmt(totalRevenue)}</strong></div>
-        <div class="pnl-row"><span style="color:rgba(255,255,255,0.65)">Expenses</span><strong style="color:#e74c3c">- ${fmt(totalExpenses)}</strong></div>
-        <div class="pnl-row" style="border-top:1px solid rgba(255,255,255,0.15);margin-top:4px">
-          <span style="font-weight:700;font-size:15px">Net Profit / Loss</span>
-          <strong style="font-size:22px;color:${grossProfit>=0?"#27ae60":"#e74c3c"}">${fmt(Math.abs(grossProfit))} ${grossProfit<0?"📉":"📈"}</strong>
+        <div class="pnl-row"><span style="color:rgba(255,255,255,0.6)">Total Revenue</span><strong style="color:#27ae60">${fmt(totalRevenue)}</strong></div>
+        <div class="pnl-row"><span style="color:rgba(255,255,255,0.6)">Total Expenses</span><strong style="color:#e74c3c">− ${fmt(totalExpenses)}</strong></div>
+        <div class="pnl-row" style="border:none;padding-top:14px;margin-top:4px">
+          <span style="font-weight:700;font-size:15px">Net ${grossProfit>=0?"Profit":"Loss"}</span>
+          <strong style="font-size:22px;color:${grossProfit>=0?"#27ae60":"#e74c3c"}">${fmt(Math.abs(grossProfit))} ${grossProfit>=0?"📈":"📉"}</strong>
         </div>
       </div>
 
@@ -253,299 +246,250 @@ function render(){
       </div>`;
   }
 
-  // ════════════════ TODAY TAB ════════════════════════════════════════════
+  // ══ TODAY ══
   else if(tab==="today"){
-    const todayCart=cartLogs.filter(l=>l.date===getToday());
-    const todayCash=cashLogs.filter(l=>l.date===getToday());
-    const todayExp=expenseLogs.filter(l=>l.date===getToday());
-    const todayRevenue=todayCart.reduce((s,l)=>s+(l.totalRevenue||0),0)+todayCash.reduce((s,l)=>s+(l.grandTotal||0),0);
-    const todayExpenses=todayExp.reduce((s,l)=>s+(l.totalExpense||0),0);
-    const todayVisits=todayRep.reduce((s,r)=>s+(r.visits||0),0);
-    const todayClosed=todayRep.reduce((s,r)=>s+(r.closedAccounts||0),0);
-    const todayCartUnits=todayCart.reduce((s,l)=>s+(l.totalUnits||0),0);
+    const tRevenue=todayCart.reduce((s,l)=>s+(l.totalRevenue||0),0)+cash.filter(l=>l.date===today).reduce((s,l)=>s+(l.grandTotal||0),0);
+    const tExp=expense.filter(l=>l.date===today).reduce((s,l)=>s+(l.totalExpense||0),0);
+    const tVisits=todayRep.reduce((s,r)=>s+(r.visits||0),0);
+    const tClosed=todayRep.reduce((s,r)=>s+(r.closedAccounts||0),0);
+    const tCartUnits=todayCart.reduce((s,l)=>s+(l.totalUnits||0),0);
 
     content.innerHTML=`
-      <div class="sec-title">Today at a Glance</div>
+      <div class="sec-title">Today at a Glance · ${new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short"})}</div>
       <div class="grid2">
-        ${[
-          ["💰","Today Revenue",fmt(todayRevenue),""],
-          ["📉","Today Expenses",fmt(todayExpenses),""],
-          ["🛒","Cart Units Sold",todayCartUnits+" units",""],
-          ["🤝","B2B Visits",todayVisits+" visits",""],
-          ["✅","Accounts Closed",todayClosed,""],
-        ].map(([ic,lb,val,sub])=>`
-          <div class="kpi-card"><div class="kpi-icon">${ic}</div><div class="kpi-label">${lb}</div><div class="kpi-value">${val}</div>${sub?`<div class="kpi-sub">${sub}</div>`:""}</div>`).join("")}
+        ${[["💰","Revenue",fmt(tRevenue)],["📉","Expenses",fmt(tExp)],["🛒","Cart Units",tCartUnits+" units"],["🤝","B2B Visits",tVisits+" visits"],["✅","Accounts Closed",tClosed]].map(([ic,lb,v])=>`<div class="kpi-card"><div style="font-size:20px;margin-bottom:6px">${ic}</div><div style="font-size:10px;color:rgba(255,255,255,0.45);font-weight:600;text-transform:uppercase">${lb}</div><div style="font-size:20px;font-weight:700;font-family:'Playfair Display',serif;color:#fff;margin-top:3px">${v}</div></div>`).join("")}
       </div>
-
-      <div class="sec-title">Today's Rep Activity</div>
-      ${todayRep.length===0?`<div class="empty">No rep reports today yet.</div>`:
-        todayRep.map((r,i)=>repCard(r,"rep",repLogs.indexOf(r),true)).join("")}`;
+      <div class="sec-title">Today's Rep Reports (${todayRep.length})</div>
+      ${todayRep.length===0?`<div class="empty">No rep reports today yet.</div>`:todayRep.map(r=>repCard(r)).join("")}
+      <div class="sec-title">Today's Cart Reports (${todayCart.length})</div>
+      ${todayCart.length===0?`<div class="empty">No cart reports today yet.</div>`:todayCart.map(l=>cartCard(l)).join("")}`;
   }
 
-  // ════════════════ B2B TAB ════════════════════════════════════════════
+  // ══ B2B ══
   else if(tab==="b2b"){
     content.innerHTML=`
       <div class="sec-title">B2B Monthly Performance</div>
       <div class="grid2">
-        ${[
-          ["📍","Total Visits",monthVisits,15*25],
-          ["🧪","Samplings",monthSamplings,4*25],
-          ["✅","Accounts Closed",monthClosed,13],
-          ["📦","Units Delivered",monthUnits,3450],
-        ].map(([ic,lb,val,tgt])=>{
-          const p=pct(val,tgt);const c=sigColor(p);
-          return `<div class="kpi-card"><div class="kpi-icon">${ic}</div><div class="kpi-label">${lb}</div><div class="kpi-value">${val.toLocaleString("en-IN")}</div><div class="kpi-sub">Target: ${tgt.toLocaleString("en-IN")}</div><div class="bar-bg"><div class="bar-fill" style="width:${p}%;background:${c}"></div></div><div style="font-size:11px;font-weight:700;color:${c};margin-top:4px">${p}%</div></div>`;
+        ${[["📍","Visits",monthVisits,15*25],["🧪","Samplings",monthSamplings,4*25],["✅","Closed",monthClosed,13],["📦","Units Delivered",monthUnits,3450]].map(([ic,lb,v,tgt])=>{
+          const p=pct(v,tgt);const c=sigColor(p);
+          return `<div class="kpi-card"><div style="font-size:20px;margin-bottom:6px">${ic}</div><div style="font-size:10px;color:rgba(255,255,255,0.45);font-weight:600;text-transform:uppercase">${lb}</div><div style="font-size:22px;font-weight:700;font-family:'Playfair Display',serif;color:#fff;margin-top:3px">${v.toLocaleString("en-IN")}</div><div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">Target: ${tgt.toLocaleString("en-IN")}</div><div class="bar-bg"><div class="bar-fill" style="width:${p}%;background:${c}"></div></div><div style="font-size:11px;font-weight:700;color:${c};margin-top:4px">${p}%</div></div>`;
         }).join("")}
       </div>
       <div class="sec-title">Revenue Collected (B2B)</div>
       <div class="pnl-card">
-        <div class="pnl-row"><span style="color:rgba(255,255,255,0.65)">Collected This Month</span><strong style="color:#27ae60;font-size:18px">${fmt(monthB2BRev)}</strong></div>
-        <div class="pnl-row"><span style="color:rgba(255,255,255,0.65)">Target</span><strong style="color:rgba(255,255,255,0.5)">₹69,000</strong></div>
+        <div class="pnl-row"><span style="color:rgba(255,255,255,0.6)">Collected This Month</span><strong style="color:#27ae60;font-size:18px">${fmt(monthB2BRev)}</strong></div>
+        <div class="pnl-row" style="border:none"><span style="color:rgba(255,255,255,0.6)">Target</span><strong style="color:rgba(255,255,255,0.4)">₹69,000</strong></div>
         <div class="bar-bg" style="margin-top:8px"><div class="bar-fill" style="width:${pct(monthB2BRev,69000)}%;background:#27ae60"></div></div>
       </div>
-
-      <div class="sec-title">All B2B Rep Logs (${b2bReps.length})</div>
-      ${b2bReps.length===0?`<div class="empty">No B2B reports this month.</div>`:
-        [...b2bReps].reverse().map((r)=>repCard(r,"rep",repLogs.indexOf(r),true)).join("")}`;
+      <div class="sec-title">B2B Rep Logs (${b2bReps.length})</div>
+      ${b2bReps.length===0?`<div class="empty">No B2B reports this month.</div>`:[...b2bReps].reverse().map(r=>repCard(r)).join("")}`;
   }
 
-  // ════════════════ CART TAB ════════════════════════════════════════════
+  // ══ CART ══
   else if(tab==="cart"){
-    // Aggregate flavour totals
     const flavourTotals={};
-    cartLogs.forEach(l=>{
-      (l.soldItems||[]).forEach(it=>{
-        if(!flavourTotals[it.flavour])flavourTotals[it.flavour]={qty:0,amount:0};
-        flavourTotals[it.flavour].qty+=it.qty;
-        flavourTotals[it.flavour].amount+=it.amount;
-      });
-    });
+    cart.forEach(l=>(l.soldItems||[]).forEach(it=>{
+      if(!flavourTotals[it.flavour])flavourTotals[it.flavour]={qty:0,amount:0};
+      flavourTotals[it.flavour].qty+=it.qty;
+      flavourTotals[it.flavour].amount+=it.amount;
+    }));
     const flavourRows=Object.entries(flavourTotals).sort((a,b)=>b[1].qty-a[1].qty);
 
     content.innerHTML=`
       <div class="sec-title">Cart Monthly Summary</div>
       <div class="grid2">
-        ${[
-          ["🛒","Units Sold",cartUnits,"Target: 2,000"],
-          ["💰","Revenue",fmt(cartRev),"Target: ₹60K"],
-          ["💵","Cash",fmt(cartCash),""],
-          ["📱","UPI",fmt(cartUPI),""],
-        ].map(([ic,lb,val,sub])=>`<div class="kpi-card"><div class="kpi-icon">${ic}</div><div class="kpi-label">${lb}</div><div class="kpi-value">${val}</div>${sub?`<div class="kpi-sub">${sub}</div>`:""}</div>`).join("")}
+        ${[["🛒","Units Sold",cartUnits,"Target: 2,000"],["💰","Revenue",fmt(cartRev),"Target: ₹60K"],["💵","Cash",fmt(cartCash),""],["📱","UPI",fmt(cartUPI),""]].map(([ic,lb,v,sub])=>`<div class="kpi-card"><div style="font-size:20px;margin-bottom:6px">${ic}</div><div style="font-size:10px;color:rgba(255,255,255,0.45);font-weight:600;text-transform:uppercase">${lb}</div><div style="font-size:20px;font-weight:700;font-family:'Playfair Display',serif;color:#fff;margin-top:3px">${v}</div>${sub?`<div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">${sub}</div>`:""}</div>`).join("")}
       </div>
-
       ${flavourRows.length>0?`
         <div class="sec-title">Top Flavours This Month</div>
         <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px">
-          ${flavourRows.slice(0,8).map(([name,data])=>`
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.07)">
-              <span style="font-size:13px;color:rgba(255,255,255,0.8)">${name}</span>
-              <div style="text-align:right"><div style="font-size:14px;font-weight:700;color:#fff">${data.qty} units</div><div style="font-size:11px;color:rgba(255,255,255,0.35)">${fmt(data.amount)}</div></div>
-            </div>`).join("")}
+          ${flavourRows.slice(0,8).map(([name,data])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.07)"><span style="font-size:13px;color:rgba(255,255,255,0.8)">${name}</span><div style="text-align:right"><div style="font-size:14px;font-weight:700">${data.qty} units</div><div style="font-size:11px;color:rgba(255,255,255,0.35)">${fmt(data.amount)}</div></div></div>`).join("")}
         </div>`:""}
-
-      <div class="sec-title">Daily Cart Reports (${cartLogs.length})</div>
-      ${cartLogs.length===0?`<div class="empty">No cart reports this month.</div>`:
-        [...cartLogs].reverse().map((l,i)=>cartCard(l,"cart",cartLogs.length-1-i)).join("")}`;
+      <div class="sec-title">Daily Cart Reports (${cart.length})</div>
+      ${cart.length===0?`<div class="empty">No cart reports this month.</div>`:[...cart].reverse().map(l=>cartCard(l)).join("")}`;
   }
 
-  // ════════════════ LOGS TAB ════════════════════════════════════════════
+  // ══ LOGS ══
   else if(tab==="logs"){
-    const filters=["all","cart","rep","cash","expense"];
     const allLogs=[
-      ...cartLogs.map(l=>({...l,_key:"cart"})),
-      ...repLogs.map(l=>({...l,_key:"rep"})),
-      ...cashLogs.map(l=>({...l,_key:"cash"})),
-      ...expenseLogs.map(l=>({...l,_key:"expense"}))
-    ].sort((a,b)=>new Date(b.submittedAt)-new Date(a.submittedAt));
-    const filtered=logsFilter==="all"?allLogs:allLogs.filter(l=>l._key===logsFilter);
+      ...cart.map(l=>({...l,_type:"cart"})),
+      ...rep.map(l=>({...l,_type:"rep"})),
+      ...cash.map(l=>({...l,_type:"cash"})),
+      ...expense.map(l=>({...l,_type:"expense"}))
+    ].sort((a,b)=>new Date(b.submittedAt||0)-new Date(a.submittedAt||0));
+    const filtered=logsFilter==="all"?allLogs:allLogs.filter(l=>l._type===logsFilter);
 
     content.innerHTML=`
       <div class="sec-title">All Entries This Month (${allLogs.length})</div>
       <div class="filter-row">
-        ${filters.map(f=>`<button class="filter-btn ${logsFilter===f?"active":""}" onclick="logsFilter='${f}';render()">${f.charAt(0).toUpperCase()+f.slice(1)}</button>`).join("")}
+        ${["all","cart","rep","cash","expense"].map(f=>`<button class="filter-btn ${logsFilter===f?"active":""}" onclick="logsFilter='${f}';render()">${f.charAt(0).toUpperCase()+f.slice(1)}</button>`).join("")}
       </div>
       ${filtered.length===0?`<div class="empty">No entries found.</div>`:
         filtered.map(l=>{
-          const srcArr=l._key==="cart"?cartLogs:l._key==="rep"?repLogs:l._key==="cash"?cashLogs:expenseLogs;
-          const srcIdx=srcArr.findIndex(r=>r.submittedAt===l.submittedAt);
-          return genericCard(l,l._key,srcIdx);
+          if(l._type==="rep")return repCard(l);
+          if(l._type==="cart")return cartCard(l);
+          if(l._type==="cash")return cashCard(l);
+          return expenseCard(l);
         }).join("")}`;
   }
 }
 
-// ── CARD RENDERERS ─────────────────────────────────────────────────────
-function repCard(r,key,idx,showBrand){
+// ── CARD RENDERERS ──────────────────────────────────────────────────────
+function repCard(r){
   const moved=(r.movedAccounts||[]).filter(m=>m.name);
   return `<div class="log-card">
-    <div class="log-header">
-      <div><div class="log-name">${r.repName||"Rep"}</div>
-        <div class="log-meta">${r.date} · ${showBrand&&r.brand?r.brand+" · ":""}${r.repRole==="existing"?"Existing Accounts":"New Acquisitions"}</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+      <div><div style="font-weight:700;font-size:14px;font-family:'Playfair Display',serif">${r.repName||"Rep"}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">${r.date||""} · ${r.brand||""} · ${r.repRole==="existing"?"Existing":"New Acquisitions"}</div>
       </div>
-      <div class="log-badge">${r.visits||0} visits</div>
+      <div style="background:rgba(255,255,255,0.12);color:#fff;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700">${r.visits||0} visits</div>
     </div>
-    <div class="log-stats">
-      <span>🧪 ${r.samplings||0} samplings</span><span>✅ ${r.closedAccounts||0} closed</span>
-      <span>📦 ${r.unitsDelivered||0} units</span><span>💰 ₹${r.revenueCollected||0}</span>
+    <div style="display:flex;gap:10px;font-size:12px;color:rgba(255,255,255,0.55);flex-wrap:wrap;margin-bottom:6px">
+      <span>🧪 ${r.samplings||0}</span><span>✅ ${r.closedAccounts||0} closed</span><span>📦 ${r.unitsDelivered||0} units</span><span>💰 ₹${r.revenueCollected||0}</span>
     </div>
-    ${moved.map(m=>`<div class="moved-pill"><strong>${m.name}</strong>: ${m.from} → ${m.to}</div>`).join("")}
-    ${r.notes?`<div class="notes-text">💬 ${r.notes}</div>`:""}
+    ${moved.map(m=>`<div style="background:rgba(231,170,81,0.15);border:1px solid rgba(231,170,81,0.5);border-radius:8px;padding:4px 10px;font-size:12px;color:#e7aa51;margin-bottom:4px"><strong>${m.name}</strong>: ${m.from} → ${m.to}</div>`).join("")}
+    ${r.notes?`<div style="font-size:12px;color:rgba(255,255,255,0.4);font-style:italic;border-top:1px solid rgba(255,255,255,0.07);padding-top:8px;margin-top:8px">💬 ${r.notes}</div>`:""}
     <div class="action-row">
-      <button class="edit-btn" onclick="openEdit('rep',${idx})">✏️ Edit</button>
-      <button class="del-btn" onclick="confirmDelete('rep',${idx})">🗑 Delete</button>
+      <button class="edit-btn" onclick='openEdit(${JSON.stringify(r).replace(/'/g,"&#39;")})'>✏️ Edit</button>
+      <button class="del-btn" onclick="deleteEntry('${r._fbPath}')">🗑 Delete</button>
     </div>
   </div>`;
 }
 
-function cartCard(l,key,idx){
+function cartCard(l){
   return `<div class="log-card">
-    <div class="log-header">
-      <div><div class="log-name">${l.operatorName||"Cart"}</div>
-        <div class="log-meta">${l.date} · ${new Date(l.submittedAt).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+      <div><div style="font-weight:700;font-size:14px;font-family:'Playfair Display',serif">${l.operatorName||"Cart"}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">${l.date||""}</div>
       </div>
-      <div class="log-badge">${l.totalUnits||0} units</div>
+      <div style="background:rgba(255,255,255,0.12);color:#fff;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700">${l.totalUnits||0} units</div>
     </div>
-    <div class="log-stats"><span>💰 ${fmt(l.totalRevenue||0)}</span><span>💵 Cash ₹${l.cash||0}</span><span>📱 UPI ₹${l.upi||0}</span></div>
-    ${(l.soldItems||[]).slice(0,4).map(it=>`<div style="font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:2px">${it.flavour}: ${it.qty} × ₹${it.amount/it.qty||120} = ₹${it.amount}</div>`).join("")}
-    ${l.notes?`<div class="notes-text">💬 ${l.notes}</div>`:""}
+    <div style="display:flex;gap:10px;font-size:12px;color:rgba(255,255,255,0.55);flex-wrap:wrap;margin-bottom:6px">
+      <span>💰 ${fmt(l.totalRevenue||0)}</span><span>💵 Cash ₹${l.cash||0}</span><span>📱 UPI ₹${l.upi||0}</span>
+    </div>
+    ${(l.soldItems||[]).filter(it=>it.qty>0).slice(0,5).map(it=>`<div style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:2px">${it.flavour}: ${it.qty} pcs · ₹${it.amount}</div>`).join("")}
+    ${l.notes?`<div style="font-size:12px;color:rgba(255,255,255,0.4);font-style:italic;border-top:1px solid rgba(255,255,255,0.07);padding-top:8px;margin-top:8px">💬 ${l.notes}</div>`:""}
     <div class="action-row">
-      <button class="edit-btn" onclick="openEdit('cart',${idx})">✏️ Edit</button>
-      <button class="del-btn" onclick="confirmDelete('cart',${idx})">🗑 Delete</button>
+      <button class="edit-btn" onclick='openEdit(${JSON.stringify(l).replace(/'/g,"&#39;")})'>✏️ Edit</button>
+      <button class="del-btn" onclick="deleteEntry('${l._fbPath}')">🗑 Delete</button>
     </div>
   </div>`;
 }
 
-function cashCard(l,key,idx){
+function cashCard(l){
   return `<div class="log-card">
-    <div class="log-header">
-      <div><div class="log-name">Cash Collection</div><div class="log-meta">${l.date}</div></div>
-      <div class="log-badge">${fmt(l.grandTotal||0)}</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+      <div><div style="font-weight:700;font-size:14px;font-family:'Playfair Display',serif">Cash Collection</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">${l.date||""}</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.12);color:#fff;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700">${fmt(l.grandTotal||0)}</div>
     </div>
-    <div class="log-stats">${(l.channels||[]).filter(c=>c.total>0).map(c=>`<span>${c.channel}: ${fmt(c.total)}</span>`).join("")}</div>
-    ${l.notes?`<div class="notes-text">💬 ${l.notes}</div>`:""}
+    <div style="display:flex;gap:10px;font-size:12px;color:rgba(255,255,255,0.55);flex-wrap:wrap;margin-bottom:6px">
+      ${(l.channels||[]).filter(c=>c.total>0).map(c=>`<span>${c.channel}: ${fmt(c.total)}</span>`).join("")}
+    </div>
+    ${l.notes?`<div style="font-size:12px;color:rgba(255,255,255,0.4);font-style:italic;border-top:1px solid rgba(255,255,255,0.07);padding-top:8px;margin-top:8px">💬 ${l.notes}</div>`:""}
     <div class="action-row">
-      <button class="edit-btn" onclick="openEdit('cash',${idx})">✏️ Edit</button>
-      <button class="del-btn" onclick="confirmDelete('cash',${idx})">🗑 Delete</button>
+      <button class="edit-btn" onclick='openEdit(${JSON.stringify(l).replace(/'/g,"&#39;")})'>✏️ Edit</button>
+      <button class="del-btn" onclick="deleteEntry('${l._fbPath}')">🗑 Delete</button>
     </div>
   </div>`;
 }
 
-function expenseCard(l,key,idx){
+function expenseCard(l){
   return `<div class="log-card">
-    <div class="log-header">
-      <div><div class="log-name">Expenses</div><div class="log-meta">${l.date}</div></div>
-      <div class="log-badge">${fmt(l.totalExpense||0)}</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+      <div><div style="font-weight:700;font-size:14px;font-family:'Playfair Display',serif">Expenses</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">${l.date||""}</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.12);color:#fff;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700">${fmt(l.totalExpense||0)}</div>
     </div>
-    <div class="log-stats">${(l.items||[]).map(it=>`<span>${it.category||"Misc"}: ₹${it.amount}</span>`).join("")}</div>
-    ${l.notes?`<div class="notes-text">💬 ${l.notes}</div>`:""}
+    <div style="display:flex;gap:10px;font-size:12px;color:rgba(255,255,255,0.55);flex-wrap:wrap;margin-bottom:6px">
+      ${(l.items||[]).map(it=>`<span>${it.category||"Misc"}: ₹${it.amount}</span>`).join("")}
+    </div>
+    ${l.notes?`<div style="font-size:12px;color:rgba(255,255,255,0.4);font-style:italic;border-top:1px solid rgba(255,255,255,0.07);padding-top:8px;margin-top:8px">💬 ${l.notes}</div>`:""}
     <div class="action-row">
-      <button class="edit-btn" onclick="openEdit('expense',${idx})">✏️ Edit</button>
-      <button class="del-btn" onclick="confirmDelete('expense',${idx})">🗑 Delete</button>
+      <button class="edit-btn" onclick='openEdit(${JSON.stringify(l).replace(/'/g,"&#39;")})'>✏️ Edit</button>
+      <button class="del-btn" onclick="deleteEntry('${l._fbPath}')">🗑 Delete</button>
     </div>
   </div>`;
-}
-
-function genericCard(l,key,idx){
-  if(key==="rep")return repCard(l,key,idx,true);
-  if(key==="cart")return cartCard(l,key,idx);
-  if(key==="cash")return cashCard(l,key,idx);
-  return expenseCard(l,key,idx);
-}
-
-// ── EDIT / DELETE ──────────────────────────────────────────────────────
-function confirmDelete(key,idx){
-  if(confirm("Delete this entry? This cannot be undone.")){
-    deleteRecord(KEYS[key],idx);
-    render();
-  }
-}
-
-function openEdit(key,idx){
-  const arr=getAllFromKey(KEYS[key]);
-  editModal={key,idx,record:{...arr[idx]}};
-  renderEditModal(document.getElementById("root"));
 }
 
 function renderEditModal(root){
-  const {key,idx,record:r}=editModal;
-  let fields="";
-
-  if(key==="rep"){
-    fields=`
-      <label class="modal-label">Visits Done</label>
-      <input class="modal-input" type="number" id="ef-visits" value="${r.visits||0}"/>
-      <label class="modal-label">Samplings Dropped</label>
-      <input class="modal-input" type="number" id="ef-samplings" value="${r.samplings||0}"/>
-      <label class="modal-label">Accounts Closed</label>
-      <input class="modal-input" type="number" id="ef-closed" value="${r.closedAccounts||0}"/>
-      <label class="modal-label">Units Delivered</label>
-      <input class="modal-input" type="number" id="ef-units" value="${r.unitsDelivered||0}"/>
-      <label class="modal-label">Revenue Collected ₹</label>
-      <input class="modal-input" type="number" id="ef-rev" value="${r.revenueCollected||0}"/>
-      <label class="modal-label">Notes</label>
-      <textarea class="modal-input" id="ef-notes" style="height:60px;resize:vertical">${r.notes||""}</textarea>`;
-  } else if(key==="cart"){
-    fields=`
-      <label class="modal-label">Total Units Sold</label>
-      <input class="modal-input" type="number" id="ef-units" value="${r.totalUnits||0}"/>
-      <label class="modal-label">Total Revenue ₹</label>
-      <input class="modal-input" type="number" id="ef-rev" value="${r.totalRevenue||0}"/>
-      <label class="modal-label">Cash ₹</label>
-      <input class="modal-input" type="number" id="ef-cash" value="${r.cash||0}"/>
-      <label class="modal-label">UPI ₹</label>
-      <input class="modal-input" type="number" id="ef-upi" value="${r.upi||0}"/>
-      <label class="modal-label">Notes</label>
-      <textarea class="modal-input" id="ef-notes" style="height:60px;resize:vertical">${r.notes||""}</textarea>`;
-  } else if(key==="cash"){
-    fields=`
-      <label class="modal-label">Grand Total ₹</label>
-      <input class="modal-input" type="number" id="ef-total" value="${r.grandTotal||0}"/>
-      <label class="modal-label">Notes</label>
-      <textarea class="modal-input" id="ef-notes" style="height:60px;resize:vertical">${r.notes||""}</textarea>`;
-  } else {
-    fields=`
-      <label class="modal-label">Total Expense ₹</label>
-      <input class="modal-input" type="number" id="ef-total" value="${r.totalExpense||0}"/>
-      <label class="modal-label">Notes</label>
-      <textarea class="modal-input" id="ef-notes" style="height:60px;resize:vertical">${r.notes||""}</textarea>`;
-  }
+  const r=editModal.record;
+  const isRep=r.type==="rep";
+  const isCart=r.type==="cart";
+  const isCash=r.type==="cash";
 
   root.innerHTML=`
     <div class="modal-overlay">
       <div class="modal">
-        <div class="modal-title">Edit Entry · ${r.date}</div>
-        ${fields}
-        <button class="modal-save" onclick="saveEdit()">Save Changes ✓</button>
-        <button class="modal-cancel" onclick="editModal=null;render()">Cancel</button>
+        <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:16px">
+          Edit ${r.type?.charAt(0).toUpperCase()+r.type?.slice(1)} Entry · ${r.date||""}
+        </div>
+        ${isRep?`
+          <label class="modal-label">Visits Done</label>
+          <input class="modal-input" type="number" id="ef1" value="${r.visits||0}"/>
+          <label class="modal-label">Samplings</label>
+          <input class="modal-input" type="number" id="ef2" value="${r.samplings||0}"/>
+          <label class="modal-label">Accounts Closed</label>
+          <input class="modal-input" type="number" id="ef3" value="${r.closedAccounts||0}"/>
+          <label class="modal-label">Units Delivered</label>
+          <input class="modal-input" type="number" id="ef4" value="${r.unitsDelivered||0}"/>
+          <label class="modal-label">Revenue Collected ₹</label>
+          <input class="modal-input" type="number" id="ef5" value="${r.revenueCollected||0}"/>
+          <label class="modal-label">Notes</label>
+          <textarea class="modal-input" id="ef6" style="height:60px;resize:vertical">${r.notes||""}</textarea>`
+        :isCart?`
+          <label class="modal-label">Total Units Sold</label>
+          <input class="modal-input" type="number" id="ef1" value="${r.totalUnits||0}"/>
+          <label class="modal-label">Total Revenue ₹</label>
+          <input class="modal-input" type="number" id="ef2" value="${r.totalRevenue||0}"/>
+          <label class="modal-label">Cash ₹</label>
+          <input class="modal-input" type="number" id="ef3" value="${r.cash||0}"/>
+          <label class="modal-label">UPI ₹</label>
+          <input class="modal-input" type="number" id="ef4" value="${r.upi||0}"/>
+          <label class="modal-label">Notes</label>
+          <textarea class="modal-input" id="ef5" style="height:60px;resize:vertical">${r.notes||""}</textarea>`
+        :isCash?`
+          <label class="modal-label">Grand Total ₹</label>
+          <input class="modal-input" type="number" id="ef1" value="${r.grandTotal||0}"/>
+          <label class="modal-label">Notes</label>
+          <textarea class="modal-input" id="ef2" style="height:60px;resize:vertical">${r.notes||""}</textarea>`
+        :`
+          <label class="modal-label">Total Expense ₹</label>
+          <input class="modal-input" type="number" id="ef1" value="${r.totalExpense||0}"/>
+          <label class="modal-label">Notes</label>
+          <textarea class="modal-input" id="ef2" style="height:60px;resize:vertical">${r.notes||""}</textarea>`}
+        <button onclick="collectAndSave('${r.type}')"
+          style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a6b,#2780e3);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif;margin-top:8px">
+          Save Changes ✓
+        </button>
+        <button onclick="editModal=null;render()"
+          style="width:100%;padding:12px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Montserrat',sans-serif;margin-top:8px">
+          Cancel
+        </button>
       </div>
     </div>`;
 }
 
-function saveEdit(){
-  const {key,idx,record:r}=editModal;
-  let updated={};
+function collectAndSave(type){
   const g=id=>{const el=document.getElementById(id);return el?el.value:null;};
-
-  if(key==="rep"){
-    updated={visits:parseInt(g("ef-visits"))||0,samplings:parseInt(g("ef-samplings"))||0,closedAccounts:parseInt(g("ef-closed"))||0,unitsDelivered:parseInt(g("ef-units"))||0,revenueCollected:parseFloat(g("ef-rev"))||0,notes:g("ef-notes")||""};
-  } else if(key==="cart"){
-    updated={totalUnits:parseInt(g("ef-units"))||0,totalRevenue:parseFloat(g("ef-rev"))||0,cash:parseFloat(g("ef-cash"))||0,upi:parseFloat(g("ef-upi"))||0,notes:g("ef-notes")||""};
-  } else if(key==="cash"){
-    updated={grandTotal:parseFloat(g("ef-total"))||0,notes:g("ef-notes")||""};
-  } else {
-    updated={totalExpense:parseFloat(g("ef-total"))||0,notes:g("ef-notes")||""};
-  }
-
-  saveRecord(KEYS[key],idx,updated);
-  editModal=null;
-  render();
+  let fields={};
+  if(type==="rep") fields={visits:parseInt(g("ef1"))||0,samplings:parseInt(g("ef2"))||0,closedAccounts:parseInt(g("ef3"))||0,unitsDelivered:parseInt(g("ef4"))||0,revenueCollected:parseFloat(g("ef5"))||0,notes:g("ef6")||""};
+  else if(type==="cart") fields={totalUnits:parseInt(g("ef1"))||0,totalRevenue:parseFloat(g("ef2"))||0,cash:parseFloat(g("ef3"))||0,upi:parseFloat(g("ef4"))||0,notes:g("ef5")||""};
+  else if(type==="cash") fields={grandTotal:parseFloat(g("ef1"))||0,notes:g("ef2")||""};
+  else fields={totalExpense:parseFloat(g("ef1"))||0,notes:g("ef2")||""};
+  editModal.fields=fields;
+  saveEdit();
 }
 
 function checkPin(val){
-  if(val===PIN){pinEntered=true;pinError=false;render();}
-  else{pinError=true;pinVal="";render();}
+  if(val===PIN){pinEntered=true;pinError=false;loadData();}
+  else{pinError=true;render();}
 }
 
-render();
+function waitAndRender(){if(window._fbReady)render();else setTimeout(waitAndRender,100);}
+waitAndRender();
 </script>
 </body>
 </html>

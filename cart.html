@@ -5,6 +5,27 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
   <title>কার্ট রিপোর্ট – Wathanzi</title>
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Montserrat:wght@700&display=swap" rel="stylesheet"/>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCiIpEt33eBLmna3YdXEbXZ4wLP5CLD20w",
+      authDomain: "wathanzi.firebaseapp.com",
+      databaseURL: "https://wathanzi-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "wathanzi",
+      storageBucket: "wathanzi.firebasestorage.app",
+      messagingSenderId: "456356745959",
+      appId: "1:456356745959:web:aeb1adaeba3cc73cbdc842"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    window._fbPush = async (path, data) => {
+      await push(ref(db, path), data);
+    };
+    window._fbReady = true;
+  </script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{min-height:100vh;background:linear-gradient(135deg,#0d3320,#1a6b3a,#27ae60);font-family:'Hind Siliguri',sans-serif;padding:20px 16px 60px}
@@ -12,45 +33,32 @@
     .header{text-align:center;margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #f0f0f0}
     .brand{font-family:'Montserrat',sans-serif;font-size:13px;color:#27ae60;font-weight:700;letter-spacing:2px;text-transform:uppercase}
     .title{font-size:22px;font-weight:700;color:#0d3320;margin-top:6px}
-    .subtitle{font-size:13px;color:#888;margin-top:4px}
     .date-chip{background:#e8f5e9;color:#1a6b3a;border-radius:20px;padding:6px 16px;font-size:13px;font-weight:600;display:inline-block;margin-top:10px}
     .section{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid #f5f5f5}
     .section-title{font-size:16px;font-weight:700;color:#0d3320;margin-bottom:14px}
     .label{display:block;font-size:13px;font-weight:600;color:#444;margin-bottom:6px}
     .input{width:100%;padding:10px 14px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:15px;color:#222;background:#fafafa;outline:none;box-sizing:border-box;font-family:'Hind Siliguri',sans-serif}
-    .input:focus{border-color:#27ae60}
-    .field{margin-bottom:14px}
     .flavour-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
     .flavour-card{background:#f9f9f9;border:1.5px solid #e8e8e8;border-radius:12px;padding:10px 12px}
     .flavour-name{font-size:14px;font-weight:700;color:#0d3320;margin-bottom:2px}
     .flavour-bn{font-size:12px;color:#888;margin-bottom:8px}
     .qty-row{display:flex;align-items:center;gap:6px}
-    .qty-btn{width:30px;height:30px;border-radius:8px;border:none;background:#e8f5e9;color:#1a6b3a;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .qty-btn{width:32px;height:32px;border-radius:8px;border:none;background:#e8f5e9;color:#1a6b3a;font-size:20px;font-weight:700;cursor:pointer;flex-shrink:0}
     .qty-input{flex:1;padding:6px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:15px;font-weight:700;text-align:center;color:#0d3320;background:#fff;font-family:'Hind Siliguri',sans-serif}
-    .payment-row{display:flex;gap:10px}
-    .pay-card{flex:1;padding:14px 10px;border:2px solid #e0e0e0;border-radius:12px;text-align:center;cursor:pointer;background:#fafafa}
-    .pay-card.active{border-color:#27ae60;background:#e8f5e9}
-    .pay-icon{font-size:24px}
-    .pay-label{font-size:13px;font-weight:700;color:#222;margin-top:4px}
     .amount-row{display:flex;gap:10px;margin-top:12px}
     .amount-field{flex:1}
     .submit-btn{width:100%;padding:16px;background:linear-gradient(135deg,#1a6b3a,#27ae60);color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;font-family:'Hind Siliguri',sans-serif;margin-top:8px}
     .error{background:#fff0f0;border:1px solid #ffcccc;color:#c0392b;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px}
+    .saving{background:#fff8e1;border:1px solid #ffe082;color:#f57f17;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;text-align:center}
     .done-screen{text-align:center;padding:40px 0}
-    .done-icon{font-size:64px}
-    .done-title{font-size:22px;font-weight:700;color:#1a6b3a;margin-top:16px}
     .summary-box{background:#e8f5e9;border-radius:12px;padding:16px 20px;margin-top:20px;text-align:left}
     .summary-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #c8e6c9;font-size:14px;color:#0d3320}
-    .total-row{display:flex;justify-content:space-between;padding:10px 0;font-size:16px;font-weight:700;color:#1a6b3a}
   </style>
 </head>
 <body>
-<div class="card">
-  <div id="app"></div>
-</div>
-
+<div class="card"><div id="app"></div></div>
 <script>
-const FLAVOURS = [
+const FLAVOURS=[
   {en:"Mango",bn:"আম (Aam)",price:120},
   {en:"Chocolate",bn:"চকলেট (Choklet)",price:120},
   {en:"Sitaphal",bn:"সীতাফল (Sitaphal)",price:120},
@@ -69,7 +77,8 @@ const FLAVOURS = [
   {en:"Butterscotch",bn:"বাটারস্কচ (Butterscotch)",price:120}
 ];
 
-const DB_KEY = "wtz_cart";
+let qtys=FLAVOURS.map(()=>0);
+let cashAmt="",upiAmt="",notes="",step="identity",error="",saving=false,operatorName="";
 
 function getToday(){return new Date().toISOString().slice(0,10)}
 function getTodayBn(){
@@ -79,87 +88,65 @@ function getTodayBn(){
   return days[d.getDay()]+", "+d.getDate()+" "+months[d.getMonth()]+" "+d.getFullYear();
 }
 
-let qtys = FLAVOURS.map(()=>0);
-let cashAmt = "";
-let upiAmt = "";
-let notes = "";
-let step = "form";
-let error = "";
-let operatorName = "";
-let nameEntered = false;
-
-function save(){
-  const soldItems = FLAVOURS.map((f,i)=>({
-    flavour:f.en, flavourBn:f.bn, qty:qtys[i], amount:qtys[i]*f.price
-  })).filter(x=>x.qty>0);
-
-  const totalUnits = soldItems.reduce((s,x)=>s+x.qty,0);
-  const totalRevenue = soldItems.reduce((s,x)=>s+x.amount,0);
-  const cash = parseFloat(cashAmt)||0;
-  const upi = parseFloat(upiAmt)||0;
-
-  const record = {
-    type:"cart",
-    date:getToday(),
-    operatorName,
+async function save(){
+  saving=true;render();
+  const soldItems=FLAVOURS.map((f,i)=>({flavour:f.en,flavourBn:f.bn,qty:qtys[i],amount:qtys[i]*f.price})).filter(x=>x.qty>0);
+  const record={
+    type:"cart",date:getToday(),operatorName,
     soldItems,
-    totalUnits,
-    totalRevenue,
-    cash,
-    upi,
+    totalUnits:soldItems.reduce((s,x)=>s+x.qty,0),
+    totalRevenue:soldItems.reduce((s,x)=>s+x.amount,0),
+    cash:parseFloat(cashAmt)||0,
+    upi:parseFloat(upiAmt)||0,
     notes,
     submittedAt:new Date().toISOString()
   };
-
-  const all = JSON.parse(localStorage.getItem(DB_KEY)||"[]");
-  all.push(record);
-  localStorage.setItem(DB_KEY, JSON.stringify(all));
-  step="done";
-  render();
+  try{
+    await window._fbPush("cart/"+getToday().replace(/-/g,"_"), record);
+    step="done";
+  }catch(e){error="সংরক্ষণ ব্যর্থ হয়েছে। আবার চেষ্টা করুন।";}
+  saving=false;render();
 }
 
 function render(){
-  const app = document.getElementById("app");
-
-  if(!nameEntered){
-    app.innerHTML = `
+  const app=document.getElementById("app");
+  if(step==="identity"){
+    app.innerHTML=`
       <div class="header">
         <div class="brand">WATHANZI</div>
         <div class="title">কার্ট বিক্রয় রিপোর্ট</div>
-        <div class="subtitle">দৈনিক শেষে জমা দিন</div>
         <div class="date-chip">${getTodayBn()}</div>
       </div>
       <div class="section">
         <div class="section-title">আপনার নাম লিখুন</div>
-        <div class="field">
-          <input class="input" id="opname" placeholder="নাম লিখুন..." value="${operatorName}"/>
-        </div>
-        <button class="submit-btn" onclick="submitName()">এগিয়ে যান →</button>
+        <input class="input" id="opname" placeholder="নাম লিখুন..." value="${operatorName}"/>
+        <button class="submit-btn" style="margin-top:12px" onclick="submitName()">এগিয়ে যান →</button>
       </div>`;
     return;
   }
-
   if(step==="done"){
-    const soldItems = FLAVOURS.map((f,i)=>({en:f.en,qty:qtys[i],amount:qtys[i]*f.price})).filter(x=>x.qty>0);
-    const totalUnits = soldItems.reduce((s,x)=>s+x.qty,0);
-    const totalRevenue = soldItems.reduce((s,x)=>s+x.amount,0);
+    const soldItems=FLAVOURS.map((f,i)=>({en:f.en,qty:qtys[i],amount:qtys[i]*f.price})).filter(x=>x.qty>0);
     app.innerHTML=`
       <div class="done-screen">
-        <div class="done-icon">✅</div>
-        <div class="done-title">রিপোর্ট জমা হয়েছে!</div>
-        <div style="color:#888;font-size:13px;margin-top:6px">${getTodayBn()}</div>
+        <div style="font-size:64px">✅</div>
+        <div style="font-size:22px;font-weight:700;color:#1a6b3a;margin-top:16px">রিপোর্ট জমা হয়েছে!</div>
+        <div style="color:#888;font-size:13px;margin-top:4px">${getTodayBn()}</div>
         <div class="summary-box">
           ${soldItems.map(x=>`<div class="summary-row"><span>${x.en}</span><span>${x.qty} টি – ₹${x.amount}</span></div>`).join("")}
-          <div class="total-row"><span>মোট বিক্রয়</span><span>${totalUnits} টি – ₹${totalRevenue}</span></div>
-          <div class="summary-row"><span>নগদ (Cash)</span><span>₹${parseFloat(cashAmt)||0}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:15px;font-weight:700;color:#1a6b3a">
+            <span>মোট</span><span>${soldItems.reduce((s,x)=>s+x.qty,0)} টি – ₹${soldItems.reduce((s,x)=>s+x.amount,0)}</span>
+          </div>
+          <div class="summary-row"><span>নগদ</span><span>₹${parseFloat(cashAmt)||0}</span></div>
           <div class="summary-row" style="border:none"><span>UPI</span><span>₹${parseFloat(upiAmt)||0}</span></div>
         </div>
-        <div style="margin-top:20px;font-size:13px;color:#999">আজকের কাজ শেষ! ধন্যবাদ 🙏</div>
+        <div style="margin-top:16px;font-size:13px;color:#999">আজকের কাজ শেষ! ধন্যবাদ 🙏</div>
       </div>`;
     return;
   }
 
-  const rows = FLAVOURS.map((f,i)=>`
+  const total=qtys.reduce((s,q)=>s+q,0);
+  const totalRev=FLAVOURS.reduce((s,f,i)=>s+qtys[i]*f.price,0);
+  const rows=FLAVOURS.map((f,i)=>`
     <div class="flavour-card">
       <div class="flavour-name">${f.en}</div>
       <div class="flavour-bn">${f.bn} · ₹${f.price}</div>
@@ -170,9 +157,6 @@ function render(){
       </div>
     </div>`).join("");
 
-  const totalUnits = qtys.reduce((s,q)=>s+q,0);
-  const totalRevenue = FLAVOURS.reduce((s,f,i)=>s+qtys[i]*f.price,0);
-
   app.innerHTML=`
     <div class="header">
       <div class="brand">WATHANZI · CART</div>
@@ -181,62 +165,50 @@ function render(){
     </div>
     <div style="background:#e8f5e9;border-radius:12px;padding:12px 16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center">
       <div style="font-size:13px;color:#1a6b3a;font-weight:600">মোট বিক্রয়</div>
-      <div style="font-size:18px;font-weight:700;color:#0d3320">${totalUnits} টি · ₹${totalRevenue}</div>
+      <div style="font-size:18px;font-weight:700;color:#0d3320" id="live-total">${total} টি · ₹${totalRev}</div>
     </div>
-
     <div class="section">
       <div class="section-title">🍦 কত টি বিক্রি হয়েছে?</div>
       <div class="flavour-row">${rows}</div>
     </div>
-
     <div class="section">
       <div class="section-title">💳 পেমেন্ট পদ্ধতি</div>
       <div class="amount-row">
-        <div class="amount-field">
-          <label class="label">নগদ (Cash) ₹</label>
-          <input class="input" type="number" min="0" placeholder="0" value="${cashAmt}" onchange="cashAmt=this.value"/>
+        <div class="amount-field"><label class="label">নগদ (Cash) ₹</label>
+          <input class="input" type="number" min="0" placeholder="0" value="${cashAmt}" oninput="cashAmt=this.value"/>
         </div>
-        <div class="amount-field">
-          <label class="label">UPI ₹</label>
-          <input class="input" type="number" min="0" placeholder="0" value="${upiAmt}" onchange="upiAmt=this.value"/>
+        <div class="amount-field"><label class="label">UPI ₹</label>
+          <input class="input" type="number" min="0" placeholder="0" value="${upiAmt}" oninput="upiAmt=this.value"/>
         </div>
       </div>
     </div>
-
     <div class="section">
-      <div class="section-title">📝 মন্তব্য (ঐচ্ছিক)</div>
-      <textarea class="input" style="height:70px;resize:vertical" placeholder="কোনো সমস্যা বা মন্তব্য থাকলে লিখুন..." onchange="notes=this.value">${notes}</textarea>
+      <div class="section-title">📝 মন্তব্য</div>
+      <textarea class="input" style="height:70px;resize:vertical" placeholder="কোনো সমস্যা থাকলে লিখুন..." oninput="notes=this.value">${notes}</textarea>
     </div>
-
+    ${saving?`<div class="saving">⏳ সংরক্ষণ হচ্ছে...</div>`:""}
     ${error?`<div class="error">${error}</div>`:""}
-    <button class="submit-btn" onclick="submitForm()">রিপোর্ট জমা দিন ✓</button>`;
+    <button class="submit-btn" onclick="submitForm()" ${saving?"disabled":""}>রিপোর্ট জমা দিন ✓</button>`;
 }
 
 function submitName(){
   const v=document.getElementById("opname").value.trim();
-  if(!v){return;}
-  operatorName=v;
-  nameEntered=true;
-  render();
+  if(!v)return;
+  operatorName=v;step="form";render();
 }
-
-function changeQty(i,d){
-  qtys[i]=Math.max(0,(qtys[i]||0)+d);
-  render();
-}
-
-function setQty(i,v){
-  qtys[i]=Math.max(0,parseInt(v)||0);
-}
-
+function changeQty(i,d){qtys[i]=Math.max(0,(qtys[i]||0)+d);render();}
+function setQty(i,v){qtys[i]=Math.max(0,parseInt(v)||0);}
 function submitForm(){
-  const total=qtys.reduce((s,q)=>s+q,0);
-  if(total===0){error="অন্তত একটি আইটেম বিক্রয় লিখুন।";render();return;}
-  error="";
-  save();
+  if(qtys.reduce((s,q)=>s+q,0)===0){error="অন্তত একটি আইটেম লিখুন।";render();return;}
+  error="";save();
 }
 
-render();
+// Wait for Firebase to be ready
+function waitAndRender(){
+  if(window._fbReady)render();
+  else setTimeout(waitAndRender,100);
+}
+waitAndRender();
 </script>
 </body>
 </html>

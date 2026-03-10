@@ -5,20 +5,32 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
   <title>Rep Report – Wathanzi</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    const app = initializeApp({
+      apiKey:"AIzaSyCiIpEt33eBLmna3YdXEbXZ4wLP5CLD20w",
+      authDomain:"wathanzi.firebaseapp.com",
+      databaseURL:"https://wathanzi-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId:"wathanzi",storageBucket:"wathanzi.firebasestorage.app",
+      messagingSenderId:"456356745959",appId:"1:456356745959:web:aeb1adaeba3cc73cbdc842"
+    });
+    const db=getDatabase(app);
+    window._fbPush=async(path,data)=>await push(ref(db,path),data);
+    window._fbReady=true;
+  </script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{min-height:100vh;background:linear-gradient(135deg,#431F0F,#6B2A0E,#993F1D);font-family:'Montserrat',sans-serif;padding:20px 16px 60px}
     .card{background:#fff;border-radius:20px;padding:24px 20px;max-width:480px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
     .header{text-align:center;margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #f5ece0}
-    .brand{font-family:'Playfair Display',serif;font-size:20px;color:#993F1D;font-weight:700;letter-spacing:1px}
-    .subtitle{font-size:12px;color:#888;margin-top:4px;text-transform:uppercase;letter-spacing:1px}
+    .brand{font-family:'Playfair Display',serif;font-size:20px;color:#993F1D;font-weight:700}
     .date-chip{background:#F6ECD9;color:#431F0F;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;display:inline-block;margin-top:10px}
     .section{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid #f5ece0}
-    .section-title{font-size:13px;font-weight:700;color:#993F1D;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
+    .sec-title{font-size:13px;font-weight:700;color:#993F1D;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
     .label{display:block;font-size:11px;font-weight:700;color:#431F0F;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px}
     .input{width:100%;padding:10px 14px;border:1.5px solid #e0d5c5;border-radius:10px;font-size:15px;color:#431F0F;background:#fdfaf5;outline:none;box-sizing:border-box;font-family:'Montserrat',sans-serif}
-    .input:focus{border-color:#993F1D}
-    .field{margin-bottom:14px}
+    .field{margin-bottom:14px;flex:1}
     .field-row{display:flex;gap:10px}
     .brand-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
     .brand-btn{padding:14px 6px;border:2px solid #e0d5c5;border-radius:12px;background:#fdfaf5;color:#431F0F;font-size:12px;font-weight:700;cursor:pointer;text-align:center;font-family:'Montserrat',sans-serif}
@@ -29,9 +41,9 @@
     .role-btn.active{border-color:#993F1D;background:#F6ECD9;color:#993F1D}
     .moved-card{background:#F6ECD9;border-radius:12px;padding:12px 12px 4px;margin-bottom:10px}
     .add-btn{background:none;border:1.5px dashed #E27F1F;color:#E27F1F;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;width:100%;font-family:'Montserrat',sans-serif}
-    .remove-btn{background:none;border:none;color:#c0392b;font-size:12px;cursor:pointer;padding:0 0 8px;font-family:'Montserrat',sans-serif}
     .submit-btn{width:100%;padding:16px;background:linear-gradient(135deg,#993F1D,#E27F1F);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif;margin-top:8px}
     .error{background:#fff0f0;border:1px solid #ffcccc;color:#c0392b;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px}
+    .saving{background:#fff8e1;border:1px solid #ffe082;color:#f57f17;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;text-align:center}
     .done-screen{text-align:center;padding:36px 0}
     .summary-box{background:#F6ECD9;border-radius:12px;padding:16px 20px;margin-top:20px;text-align:left}
     .summary-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e8dcc8;font-size:14px;color:#431F0F}
@@ -40,44 +52,32 @@
 </head>
 <body>
 <div class="card" id="app"></div>
-
 <script>
 const STAGES=["S1 - Prospect","S2 - Sampling","S3 - Pipeline","S4 - Negotiation","S5 - Closed"];
-const DB_KEY="wtz_reps";
+let step="identity",repName="",selectedBrand="",repRole="";
+let visits="",samplings="",closedAcc="",unitsDelivered="",revenueCollected="";
+let movedAccounts=[{name:"",from:"",to:""}];
+let notes="",error="",saving=false;
 
 function getToday(){return new Date().toISOString().slice(0,10)}
 function getTodayLabel(){return new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
 
-let step="identity";
-let repName="";
-let selectedBrand="";
-let repRole="";
-
-// Form state
-let visits="",samplings="",closedAcc="",unitsDelivered="",revenueCollected="";
-let movedAccounts=[{name:"",from:"",to:""}];
-let notes="";
-let error="";
-
-function save(){
+async function save(){
+  saving=true;render();
   const record={
-    type:"rep",
-    date:getToday(),
-    repName,brand:selectedBrand,repRole,
-    visits:parseInt(visits)||0,
-    samplings:parseInt(samplings)||0,
+    type:"rep",date:getToday(),repName,brand:selectedBrand,repRole,
+    visits:parseInt(visits)||0,samplings:parseInt(samplings)||0,
     closedAccounts:parseInt(closedAcc)||0,
     unitsDelivered:parseInt(unitsDelivered)||0,
     revenueCollected:parseFloat(revenueCollected)||0,
     movedAccounts:movedAccounts.filter(m=>m.name),
-    notes,
-    submittedAt:new Date().toISOString()
+    notes,submittedAt:new Date().toISOString()
   };
-  const all=JSON.parse(localStorage.getItem(DB_KEY)||"[]");
-  all.push(record);
-  localStorage.setItem(DB_KEY,JSON.stringify(all));
-  step="done";
-  render();
+  try{
+    await window._fbPush("reps/"+getToday().replace(/-/g,"_"),record);
+    step="done";
+  }catch(e){error="Failed to save. Please try again.";}
+  saving=false;render();
 }
 
 function addMoved(){movedAccounts.push({name:"",from:"",to:""});render()}
@@ -85,37 +85,27 @@ function removeMoved(i){movedAccounts=movedAccounts.filter((_,j)=>j!==i);render(
 
 function render(){
   const app=document.getElementById("app");
-
-  // ── IDENTITY ────────────────────────────────────────────────────────
   if(step==="identity"){
     app.innerHTML=`
       <div class="header">
         <div class="brand">WATHANZI</div>
-        <div class="subtitle">Sales Rep · Daily Report</div>
+        <div style="font-size:12px;color:#888;margin-top:4px;text-transform:uppercase;letter-spacing:1px">Sales Rep · Daily Report</div>
         <div class="date-chip">${getTodayLabel()}</div>
       </div>
       <div class="section">
-        <div class="section-title">Your Name</div>
-        <div class="field">
-          <input class="input" id="rname" placeholder="Enter your full name" value="${repName}"/>
-        </div>
+        <div class="sec-title">Your Name</div>
+        <div class="field"><input class="input" id="rname" placeholder="Enter your full name" value="${repName}"/></div>
       </div>
       <div class="section">
-        <div class="section-title">Select Brand</div>
+        <div class="sec-title">Select Brand</div>
         <div class="brand-grid">
-          <button class="brand-btn ${selectedBrand==='Good Scoop'?'active':''}" onclick="selectBrand('Good Scoop')">
-            <span class="brand-icon">🍨</span>Good Scoop
-          </button>
-          <button class="brand-btn ${selectedBrand==='Balaram Kulfi'?'active':''}" onclick="selectBrand('Balaram Kulfi')">
-            <span class="brand-icon">🍦</span>Balaram Kulfi
-          </button>
-          <button class="brand-btn ${selectedBrand==='B2B'?'active':''}" onclick="selectBrand('B2B')">
-            <span class="brand-icon">🤝</span>B2B
-          </button>
+          <button class="brand-btn ${selectedBrand==='Good Scoop'?'active':''}" onclick="selectBrand('Good Scoop')"><span class="brand-icon">🍨</span>Good Scoop</button>
+          <button class="brand-btn ${selectedBrand==='Balaram Kulfi'?'active':''}" onclick="selectBrand('Balaram Kulfi')"><span class="brand-icon">🍦</span>Balaram Kulfi</button>
+          <button class="brand-btn ${selectedBrand==='B2B'?'active':''}" onclick="selectBrand('B2B')"><span class="brand-icon">🤝</span>B2B</button>
         </div>
       </div>
       <div class="section">
-        <div class="section-title">Your Role</div>
+        <div class="sec-title">Your Role</div>
         <div class="role-row">
           <button class="role-btn ${repRole==='existing'?'active':''}" onclick="selectRole('existing')">🤝 Existing Accounts</button>
           <button class="role-btn ${repRole==='new'?'active':''}" onclick="selectRole('new')">🚀 New Acquisitions</button>
@@ -124,8 +114,6 @@ function render(){
       <button class="submit-btn" style="opacity:${repName&&selectedBrand&&repRole?1:0.4}" onclick="proceedToForm()">Continue →</button>`;
     return;
   }
-
-  // ── DONE ─────────────────────────────────────────────────────────────
   if(step==="done"){
     app.innerHTML=`
       <div class="done-screen">
@@ -133,16 +121,14 @@ function render(){
         <div style="font-family:'Playfair Display',serif;font-size:22px;color:#993F1D;font-weight:700;margin-top:14px">Report Submitted!</div>
         <div style="color:#888;font-size:13px;margin-top:6px">${getTodayLabel()}</div>
         <div class="summary-box">
-          ${[["Brand",selectedBrand],["Role",repRole==="existing"?"Existing Accounts":"New Acquisitions"],["Visits",visits||0],["Samplings",samplings||0],["Accounts Closed",closedAcc||0],["Units Delivered",unitsDelivered||0],["Revenue Collected","₹"+(revenueCollected||0)]].map(([k,v])=>`<div class="summary-row"><span>${k}</span><strong>${v}</strong></div>`).join("")}
+          ${[["Brand",selectedBrand],["Role",repRole==="existing"?"Existing Accounts":"New Acquisitions"],["Visits",visits||0],["Samplings",samplings||0],["Closed",closedAcc||0],["Units Delivered",unitsDelivered||0],["Revenue","₹"+(revenueCollected||0)]].map(([k,v])=>`<div class="summary-row"><span>${k}</span><strong>${v}</strong></div>`).join("")}
         </div>
-        <div style="margin-top:20px;font-size:13px;color:#999">Great work today! 💪</div>
+        <div style="margin-top:16px;font-size:13px;color:#999">Synced to dashboard ✓</div>
       </div>`;
     return;
   }
 
-  // ── FORM ──────────────────────────────────────────────────────────────
-  const isBrand = selectedBrand==="Good Scoop"||selectedBrand==="Balaram Kulfi";
-  const movedHtml = movedAccounts.map((m,i)=>`
+  const movedHtml=movedAccounts.map((m,i)=>`
     <div class="moved-card">
       <div class="field"><label class="label">Account Name</label>
         <input class="input" placeholder="e.g. Gupta Brothers" value="${m.name}" onchange="movedAccounts[${i}].name=this.value"/>
@@ -155,7 +141,7 @@ function render(){
           <select onchange="movedAccounts[${i}].to=this.value"><option value="">Select</option>${STAGES.map(s=>`<option ${m.to===s?"selected":""}>${s}</option>`).join("")}</select>
         </div>
       </div>
-      ${movedAccounts.length>1?`<button class="remove-btn" onclick="removeMoved(${i})">Remove</button>`:""}
+      ${movedAccounts.length>1?`<button style="background:none;border:none;color:#c0392b;font-size:12px;cursor:pointer;padding:0 0 8px;font-family:'Montserrat',sans-serif" onclick="removeMoved(${i})">Remove</button>`:""}
     </div>`).join("");
 
   app.innerHTML=`
@@ -167,70 +153,53 @@ function render(){
       </div>
       <button style="background:none;border:none;color:#993F1D;font-size:12px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:600" onclick="step='identity';render()">← Back</button>
     </div>
-
     <div class="section">
-      <div class="section-title">📍 Field Activity</div>
+      <div class="sec-title">📍 Field Activity</div>
       <div class="field-row">
-        <div class="field"><label class="label">Visits Done *</label>
-          <input class="input" type="number" min="0" placeholder="0" value="${visits}" oninput="visits=this.value"/>
-        </div>
-        <div class="field"><label class="label">Samplings Dropped</label>
-          <input class="input" type="number" min="0" placeholder="0" value="${samplings}" oninput="samplings=this.value"/>
-        </div>
+        <div class="field"><label class="label">Visits Done *</label><input class="input" type="number" min="0" placeholder="0" value="${visits}" oninput="visits=this.value"/></div>
+        <div class="field"><label class="label">Samplings Dropped</label><input class="input" type="number" min="0" placeholder="0" value="${samplings}" oninput="samplings=this.value"/></div>
       </div>
     </div>
-
     <div class="section">
-      <div class="section-title">🎯 Accounts Closed</div>
-      <div class="field"><label class="label">New accounts closed today</label>
-        <input class="input" type="number" min="0" placeholder="0" value="${closedAcc}" oninput="closedAcc=this.value"/>
-      </div>
+      <div class="sec-title">🎯 Accounts Closed</div>
+      <div class="field"><label class="label">New accounts closed today</label><input class="input" type="number" min="0" placeholder="0" value="${closedAcc}" oninput="closedAcc=this.value"/></div>
     </div>
-
     <div class="section">
-      <div class="section-title">📦 Delivery & Collection</div>
+      <div class="sec-title">📦 Delivery & Collection</div>
       <div class="field-row">
-        <div class="field"><label class="label">Units Delivered</label>
-          <input class="input" type="number" min="0" placeholder="0" value="${unitsDelivered}" oninput="unitsDelivered=this.value"/>
-        </div>
-        <div class="field"><label class="label">Revenue Collected ₹</label>
-          <input class="input" type="number" min="0" placeholder="0" value="${revenueCollected}" oninput="revenueCollected=this.value"/>
-        </div>
+        <div class="field"><label class="label">Units Delivered</label><input class="input" type="number" min="0" placeholder="0" value="${unitsDelivered}" oninput="unitsDelivered=this.value"/></div>
+        <div class="field"><label class="label">Revenue Collected ₹</label><input class="input" type="number" min="0" placeholder="0" value="${revenueCollected}" oninput="revenueCollected=this.value"/></div>
       </div>
     </div>
-
     <div class="section">
-      <div class="section-title">📈 Accounts Moved Stage</div>
+      <div class="sec-title">📈 Accounts Moved Stage</div>
       <div style="font-size:12px;color:#888;margin-bottom:10px">Log accounts that moved pipeline stage today.</div>
       ${movedHtml}
       <button class="add-btn" onclick="addMoved()">+ Add Account</button>
     </div>
-
     <div class="section">
-      <div class="section-title">📝 Notes / Blockers</div>
+      <div class="sec-title">📝 Notes / Blockers</div>
       <textarea class="input" style="height:72px;resize:vertical" placeholder="Blockers, feedback, anything important..." oninput="notes=this.value">${notes}</textarea>
     </div>
-
+    ${saving?`<div class="saving">⏳ Saving to dashboard...</div>`:""}
     ${error?`<div class="error">${error}</div>`:""}
-    <button class="submit-btn" onclick="submitForm()">Submit Daily Report ✓</button>`;
+    <button class="submit-btn" onclick="submitForm()" ${saving?"disabled":""}>Submit Daily Report ✓</button>`;
 }
 
 function selectBrand(b){selectedBrand=b;render()}
 function selectRole(r){repRole=r;render()}
-
 function proceedToForm(){
-  const v=document.getElementById("rname");
-  if(v)repName=v.value.trim();
-  if(!repName||!selectedBrand||!repRole){return;}
+  const v=document.getElementById("rname");if(v)repName=v.value.trim();
+  if(!repName||!selectedBrand||!repRole)return;
   step="form";render();
 }
-
 function submitForm(){
   if(!visits){error="Please enter visits done.";render();return;}
   error="";save();
 }
 
-render();
+function waitAndRender(){if(window._fbReady)render();else setTimeout(waitAndRender,100);}
+waitAndRender();
 </script>
 </body>
 </html>
