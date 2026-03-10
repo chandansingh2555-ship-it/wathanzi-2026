@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+  <title>Expenses – Wathanzi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{min-height:100vh;background:linear-gradient(135deg,#1a0a28,#4a1a5e,#8e24aa);font-family:'Montserrat',sans-serif;padding:20px 16px 60px}
+    .card{background:#fff;border-radius:20px;padding:24px 20px;max-width:480px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+    .header{text-align:center;margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #f5eeff}
+    .brand{font-family:'Playfair Display',serif;font-size:20px;color:#6a1b9a;font-weight:700}
+    .subtitle{font-size:12px;color:#888;margin-top:4px;text-transform:uppercase;letter-spacing:1px}
+    .date-chip{background:#f5eeff;color:#4a1a5e;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;display:inline-block;margin-top:10px}
+    .section{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid #f5eeff}
+    .section-title{font-size:13px;font-weight:700;color:#6a1b9a;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
+    .label{display:block;font-size:11px;font-weight:700;color:#333;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px}
+    .input{width:100%;padding:10px 14px;border:1.5px solid #e0d5f0;border-radius:10px;font-size:15px;color:#1a0a28;background:#faf8ff;outline:none;box-sizing:border-box;font-family:'Montserrat',sans-serif}
+    .input:focus{border-color:#8e24aa}
+    select{width:100%;padding:10px 14px;border:1.5px solid #e0d5f0;border-radius:10px;font-size:14px;color:#1a0a28;background:#faf8ff;outline:none;box-sizing:border-box;font-family:'Montserrat',sans-serif}
+    .field{margin-bottom:14px}
+    .field-row{display:flex;gap:10px}
+    .expense-item{background:#f5eeff;border-radius:12px;padding:14px 14px 4px;margin-bottom:10px;position:relative}
+    .remove-btn{background:none;border:none;color:#c0392b;font-size:12px;cursor:pointer;padding:0 0 10px;font-family:'Montserrat',sans-serif}
+    .add-btn{background:none;border:1.5px dashed #8e24aa;color:#8e24aa;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;width:100%;font-family:'Montserrat',sans-serif}
+    .total-bar{background:#f5eeff;border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+    .submit-btn{width:100%;padding:16px;background:linear-gradient(135deg,#4a1a5e,#8e24aa);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif;margin-top:8px}
+    .error{background:#fff0f0;border:1px solid #ffcccc;color:#c0392b;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px}
+    .done-screen{text-align:center;padding:36px 0}
+    .summary-box{background:#f5eeff;border-radius:12px;padding:16px 20px;margin-top:20px;text-align:left}
+    .summary-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e0d5f0;font-size:14px;color:#1a0a28}
+  </style>
+</head>
+<body>
+<div class="card" id="app"></div>
+<script>
+const CATEGORIES=["Raw Material / Ingredients","Staff Wages","Packaging","Rent & Utilities","Transport & Delivery","Marketing & Ads","Equipment & Maintenance","Miscellaneous"];
+const BRANDS=["Good Scoop","Balaram Kulfi","B2B","General / Shared"];
+const DB_KEY="wtz_expenses";
+
+function getToday(){return new Date().toISOString().slice(0,10)}
+function getTodayLabel(){return new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+
+let items=[{category:"",brand:"",amount:"",description:""}];
+let notes="";
+let step="form";
+let error="";
+
+function getTotal(){return items.reduce((s,it)=>s+(parseFloat(it.amount)||0),0)}
+
+function addItem(){items.push({category:"",brand:"",amount:"",description:""});render()}
+function removeItem(i){items=items.filter((_,j)=>j!==i);render()}
+
+function save(){
+  const record={
+    type:"expense",
+    date:getToday(),
+    items:items.filter(it=>it.amount).map(it=>({...it,amount:parseFloat(it.amount)||0})),
+    totalExpense:getTotal(),
+    notes,
+    submittedAt:new Date().toISOString()
+  };
+  const all=JSON.parse(localStorage.getItem(DB_KEY)||"[]");
+  all.push(record);
+  localStorage.setItem(DB_KEY,JSON.stringify(all));
+  step="done";render();
+}
+
+function render(){
+  const app=document.getElementById("app");
+
+  if(step==="done"){
+    const validItems=items.filter(it=>it.amount);
+    app.innerHTML=`
+      <div class="done-screen">
+        <div style="font-size:60px">✅</div>
+        <div style="font-family:'Playfair Display',serif;font-size:22px;color:#6a1b9a;font-weight:700;margin-top:14px">Expenses Logged!</div>
+        <div style="color:#888;font-size:13px;margin-top:6px">${getTodayLabel()}</div>
+        <div class="summary-box">
+          ${validItems.map(it=>`<div class="summary-row"><span>${it.category||"Misc"} · ${it.brand||"-"}</span><strong>₹${it.amount}</strong></div>`).join("")}
+          <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:16px;font-weight:700;color:#6a1b9a"><span>Total Expenses</span><span>₹${getTotal()}</span></div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const itemsHtml=items.map((it,i)=>`
+    <div class="expense-item">
+      <div class="field-row">
+        <div class="field"><label class="label">Category</label>
+          <select onchange="items[${i}].category=this.value">
+            <option value="">Select...</option>
+            ${CATEGORIES.map(c=>`<option ${it.category===c?"selected":""}>${c}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field"><label class="label">Brand</label>
+          <select onchange="items[${i}].brand=this.value">
+            <option value="">Select...</option>
+            ${BRANDS.map(b=>`<option ${it.brand===b?"selected":""}>${b}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      <div class="field"><label class="label">Amount ₹</label>
+        <input class="input" type="number" min="0" placeholder="0" value="${it.amount}" oninput="items[${i}].amount=this.value;updateTotal()"/>
+      </div>
+      <div class="field"><label class="label">Description (optional)</label>
+        <input class="input" placeholder="e.g. Milk from supplier" value="${it.description}" oninput="items[${i}].description=this.value"/>
+      </div>
+      ${items.length>1?`<button class="remove-btn" onclick="removeItem(${i})">Remove</button>`:""}
+    </div>`).join("");
+
+  app.innerHTML=`
+    <div class="header">
+      <div class="brand">WATHANZI</div>
+      <div class="subtitle">Expense Entry</div>
+      <div class="date-chip">${getTodayLabel()}</div>
+    </div>
+    <div class="total-bar">
+      <div style="font-size:13px;color:#555;font-weight:600">Total Expenses</div>
+      <div style="font-size:22px;font-weight:700;color:#6a1b9a;font-family:'Playfair Display',serif" id="grand-total">₹${getTotal()}</div>
+    </div>
+    <div class="section">
+      <div class="section-title">📉 Expense Items</div>
+      ${itemsHtml}
+      <button class="add-btn" onclick="addItem()">+ Add Another Expense</button>
+    </div>
+    <div class="section">
+      <div class="section-title">📝 Notes</div>
+      <textarea class="input" style="height:70px;resize:vertical" placeholder="Any additional context..." oninput="notes=this.value">${notes}</textarea>
+    </div>
+    ${error?`<div class="error">${error}</div>`:""}
+    <button class="submit-btn" onclick="submitForm()">Log Expenses ✓</button>`;
+}
+
+function updateTotal(){
+  const el=document.getElementById("grand-total");
+  if(el)el.textContent="₹"+getTotal();
+}
+
+function submitForm(){
+  if(getTotal()===0){error="Please enter at least one expense amount.";render();return;}
+  error="";save();
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+  <title>Cash Collection – Wathanzi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{min-height:100vh;background:linear-gradient(135deg,#0a1628,#1a3a6b,#2780e3);font-family:'Montserrat',sans-serif;padding:20px 16px 60px}
+    .card{background:#fff;border-radius:20px;padding:24px 20px;max-width:480px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+    .header{text-align:center;margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #eef2ff}
+    .brand{font-family:'Playfair Display',serif;font-size:20px;color:#1a3a6b;font-weight:700}
+    .subtitle{font-size:12px;color:#888;margin-top:4px;text-transform:uppercase;letter-spacing:1px}
+    .date-chip{background:#eef2ff;color:#1a3a6b;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;display:inline-block;margin-top:10px}
+    .section{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid #eef2ff}
+    .section-title{font-size:13px;font-weight:700;color:#1a3a6b;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
+    .label{display:block;font-size:11px;font-weight:700;color:#333;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px}
+    .input{width:100%;padding:10px 14px;border:1.5px solid #dde3f0;border-radius:10px;font-size:15px;color:#1a1a2e;background:#f8faff;outline:none;box-sizing:border-box;font-family:'Montserrat',sans-serif}
+    .input:focus{border-color:#2780e3}
+    .field{margin-bottom:14px;flex:1}
+    .field-row{display:flex;gap:10px}
+    .channel-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+    .ch-card{background:#f8faff;border:2px solid #dde3f0;border-radius:14px;padding:16px 14px}
+    .ch-name{font-size:13px;font-weight:700;color:#1a3a6b;margin-bottom:10px}
+    .total-bar{background:#eef2ff;border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+    .total-label{font-size:13px;color:#555;font-weight:600}
+    .total-value{font-size:22px;font-weight:700;color:#1a3a6b;font-family:'Playfair Display',serif}
+    .submit-btn{width:100%;padding:16px;background:linear-gradient(135deg,#1a3a6b,#2780e3);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif;margin-top:8px}
+    .done-screen{text-align:center;padding:36px 0}
+    .summary-box{background:#eef2ff;border-radius:12px;padding:16px 20px;margin-top:20px;text-align:left}
+    .summary-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #dde3f0;font-size:14px;color:#1a1a2e}
+    .error{background:#fff0f0;border:1px solid #ffcccc;color:#c0392b;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px}
+  </style>
+</head>
+<body>
+<div class="card" id="app"></div>
+<script>
+const DB_KEY="wtz_cash";
+const CHANNELS=["Good Scoop","Balaram Kulfi","B2B","Cart"];
+
+function getToday(){return new Date().toISOString().slice(0,10)}
+function getTodayLabel(){return new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+
+// State: per channel: {cash, upi}
+let data = CHANNELS.map(()=>({cash:"",upi:""}));
+let notes="";
+let step="form";
+let error="";
+
+function getTotal(){
+  return data.reduce((s,d)=>{
+    return s+(parseFloat(d.cash)||0)+(parseFloat(d.upi)||0);
+  },0);
+}
+
+function save(){
+  const channels=CHANNELS.map((name,i)=>({
+    channel:name,
+    cash:parseFloat(data[i].cash)||0,
+    upi:parseFloat(data[i].upi)||0,
+    total:(parseFloat(data[i].cash)||0)+(parseFloat(data[i].upi)||0)
+  }));
+  const record={
+    type:"cash",
+    date:getToday(),
+    channels,
+    grandTotal:getTotal(),
+    notes,
+    submittedAt:new Date().toISOString()
+  };
+  const all=JSON.parse(localStorage.getItem(DB_KEY)||"[]");
+  all.push(record);
+  localStorage.setItem(DB_KEY,JSON.stringify(all));
+  step="done";render();
+}
+
+function render(){
+  const app=document.getElementById("app");
+
+  if(step==="done"){
+    const channels=CHANNELS.map((name,i)=>({name,cash:parseFloat(data[i].cash)||0,upi:parseFloat(data[i].upi)||0}));
+    app.innerHTML=`
+      <div class="done-screen">
+        <div style="font-size:60px">✅</div>
+        <div style="font-family:'Playfair Display',serif;font-size:22px;color:#1a3a6b;font-weight:700;margin-top:14px">Collection Logged!</div>
+        <div style="color:#888;font-size:13px;margin-top:6px">${getTodayLabel()}</div>
+        <div class="summary-box">
+          ${channels.map(c=>`<div class="summary-row"><span>${c.name}</span><strong>₹${c.cash+c.upi} (Cash ₹${c.cash} · UPI ₹${c.upi})</strong></div>`).join("")}
+          <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:16px;font-weight:700;color:#1a3a6b"><span>Grand Total</span><span>₹${getTotal()}</span></div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const channelCards=CHANNELS.map((name,i)=>`
+    <div class="ch-card">
+      <div class="ch-name">${name}</div>
+      <div class="field"><label class="label">Cash ₹</label>
+        <input class="input" type="number" min="0" placeholder="0" value="${data[i].cash}" oninput="data[${i}].cash=this.value;updateTotal()"/>
+      </div>
+      <div class="field"><label class="label">UPI ₹</label>
+        <input class="input" type="number" min="0" placeholder="0" value="${data[i].upi}" oninput="data[${i}].upi=this.value;updateTotal()"/>
+      </div>
+    </div>`).join("");
+
+  app.innerHTML=`
+    <div class="header">
+      <div class="brand">WATHANZI</div>
+      <div class="subtitle">Daily Cash Collection</div>
+      <div class="date-chip">${getTodayLabel()}</div>
+    </div>
+    <div class="total-bar">
+      <div class="total-label">Total Collected</div>
+      <div class="total-value" id="grand-total">₹${getTotal()}</div>
+    </div>
+    <div class="section">
+      <div class="section-title">💰 Collection by Channel</div>
+      <div class="channel-grid">${channelCards}</div>
+    </div>
+    <div class="section">
+      <div class="section-title">📝 Notes</div>
+      <textarea class="input" style="height:70px;resize:vertical" placeholder="Any discrepancies or notes..." oninput="notes=this.value">${notes}</textarea>
+    </div>
+    ${error?`<div class="error">${error}</div>`:""}
+    <button class="submit-btn" onclick="submitForm()">Log Collection ✓</button>`;
+}
+
+function updateTotal(){
+  const el=document.getElementById("grand-total");
+  if(el)el.textContent="₹"+getTotal();
+}
+
+function submitForm(){
+  if(getTotal()===0){error="Please enter at least one amount.";render();return;}
+  error="";save();
+}
+
+render();
+</script>
+</body>
+</html>

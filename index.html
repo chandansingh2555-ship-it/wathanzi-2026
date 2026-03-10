@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Wathanzi Operations</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{min-height:100vh;background:linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 50%,#16213e 100%);display:flex;align-items:center;justify-content:center;font-family:'Montserrat',sans-serif;padding:24px}
+    .card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:36px 28px;width:100%;max-width:380px;backdrop-filter:blur(10px)}
+    .brand{text-align:center;margin-bottom:32px}
+    .brand-name{font-family:'Playfair Display',serif;font-size:28px;color:#fff;letter-spacing:3px}
+    .brand-sub{font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+    .divider{height:1px;background:rgba(255,255,255,0.08);margin:20px 0}
+    .section-label{font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+    a{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:14px;text-decoration:none;margin-bottom:10px;font-size:14px;font-weight:600;transition:opacity 0.2s}
+    a:active{opacity:0.7}
+    .cart{background:linear-gradient(135deg,#1a6b3a,#27ae60);color:#fff}
+    .rep{background:linear-gradient(135deg,#993F1D,#E27F1F);color:#fff}
+    .cash{background:linear-gradient(135deg,#1a3a6b,#2780e3);color:#fff}
+    .expense{background:linear-gradient(135deg,#6b1a3a,#c0392b);color:#fff}
+    .dashboard{background:linear-gradient(135deg,#2c2c2c,#555);color:#fff;margin-top:20px}
+    .icon{font-size:20px;flex-shrink:0}
+    .link-text{flex:1}
+    .link-label{font-size:14px;font-weight:700}
+    .link-sub{font-size:11px;opacity:0.7;margin-top:1px}
+    .arrow{font-size:16px;opacity:0.6}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">
+      <div class="brand-name">WATHANZI</div>
+      <div class="brand-sub">Food &amp; Beverages · Operations</div>
+    </div>
+
+    <div class="section-label">Field Links</div>
+
+    <a href="cart.html" class="cart">
+      <span class="icon">🛒</span>
+      <div class="link-text">
+        <div class="link-label">Cart Operator</div>
+        <div class="link-sub">বাংলায় দৈনিক বিক্রয় রিপোর্ট</div>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+
+    <a href="rep.html" class="rep">
+      <span class="icon">🤝</span>
+      <div class="link-text">
+        <div class="link-label">Sales Rep Report</div>
+        <div class="link-sub">Good Scoop · Balaram Kulfi · B2B</div>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+
+    <div class="divider"></div>
+    <div class="section-label">Founder Links</div>
+
+    <a href="cash.html" class="cash">
+      <span class="icon">💰</span>
+      <div class="link-text">
+        <div class="link-label">Daily Cash Collection</div>
+        <div class="link-sub">All channels · UPI + Cash</div>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+
+    <a href="expenses.html" class="expense">
+      <span class="icon">📉</span>
+      <div class="link-text">
+        <div class="link-label">Expense Entry</div>
+        <div class="link-sub">Log costs for real-time P&amp;L</div>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+
+    <div class="divider"></div>
+
+    <a href="dashboard.html" class="dashboard">
+      <span class="icon">📊</span>
+      <div class="link-text">
+        <div class="link-label">Founder Dashboard</div>
+        <div class="link-sub">PIN protected · Real-time P&amp;L</div>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+  </div>
+</body>
+</html>
